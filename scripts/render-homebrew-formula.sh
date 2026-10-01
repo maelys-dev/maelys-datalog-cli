@@ -33,4 +33,7 @@ sed -e "s|@URL@|$url|g" -e "s|@VERSION@|$version|g" \
     -e "s|@CLI_TAG@|$cli_tag|g" -e "s|@CLI_PIN@|$cli_pin|g" \
     -e "s|@JSON_TAG@|$json_tag|g" -e "s|@JSON_PIN@|$json_pin|g" \
     "$work/tag/packaging/homebrew/maelys-datalog.rb.in" > "$output"
-grep -q '@[A-Z_]*@' "$output" && { echo "unrendered placeholder" >&2; exit 1; }
+if grep -q '@[A-Z_]*@' "$output"; then
+    echo "unrendered placeholder" >&2
+    exit 1
+fi
