@@ -45,7 +45,9 @@ class MaelysDatalog < Formula
     JSON
     (testpath/"policy.dl").write "allow(X) :- input(X).\n"
     (testpath/"facts.dl").write "input(\"ok\").\n"
-    result = shell_output("#{bin}/maelys-datalog solve --domain #{testpath}/domain.json --facts #{testpath}/facts.dl #{testpath}/policy.dl")
+    command = "#{bin}/maelys-datalog solve --domain #{testpath}/domain.json " \
+              "--facts #{testpath}/facts.dl #{testpath}/policy.dl"
+    result = shell_output(command)
     assert_match 'allow("ok").', result
   end
 end

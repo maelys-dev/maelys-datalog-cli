@@ -4,6 +4,14 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+## 0.1.1 — 2026-10-01
+
+### Fixed
+
+- Return success after rendering a complete Homebrew formula and keep its
+  installation test within Homebrew's style limit, so the tap job can build
+  bottles for the first CLI release.
+
 ## 0.1.0 — 2026-10-01
 
 ### Added
