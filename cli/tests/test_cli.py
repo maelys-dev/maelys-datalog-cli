@@ -65,6 +65,9 @@ def basic():
     assert checked["domains"][0]["predicates"][3]["query"] is True
     identity = run("fingerprint", "--domain", domain, policy)
     assert identity["policyFingerprint"] == checked["policyFingerprint"]
+    assert text("fingerprint", "--domain", domain, policy) == (
+        f'policyFingerprint: {identity["policyFingerprint"]}\n'
+        f'executionFingerprint: {identity["executionFingerprint"]}\n')
     solved = run("solve", "--domain", domain, "--facts", facts, policy)
     assert solved["derivedFactCount"] == 2
     assert solved["policyFingerprint"] == identity["policyFingerprint"]
@@ -105,6 +108,11 @@ def basic():
                "--why", "false", policy, "can_deliver", exit_code=1)["code"] == "VALIDATION_FAILED"
     assert run("solve", "--domain", domain, "--facts", facts,
                "--work-limit", "1", policy, exit_code=1)["code"] == "UNSUPPORTED"
+    assert run("check", "--domain", domain, "--policy-id", "", policy,
+               exit_code=1)["code"] == "VALIDATION_FAILED"
+    version = subprocess.run([str(BINARY), "--version"], capture_output=True,
+                             text=True, check=False)
+    assert version.returncode == 0 and (ROOT / "VERSION").read_text().strip() in version.stdout
 
 
 def malformed():
@@ -159,9 +167,66 @@ def malformed():
             error = run(command, *args, exit_code=1)
             assert error["code"] == "NOT_FOUND"
             assert error["message"] == f"domain file not found: {missing}"
+        for command, args, message in (
+            ("check", ("--domain", domain, missing), "policy file not found"),
+            ("fingerprint", ("--domain", domain, missing), "policy file not found"),
+            ("solve", ("--domain", domain, "--facts", missing, policy),
+             "facts file not found"),
+            ("check", ("--domain", domain, "--manifest", missing),
+             "manifest file not found"),
+        ):
+            error = run(command, *args, exit_code=1)
+            assert error["code"] == "NOT_FOUND"
+            assert error["message"] == f"{message}: {missing}"
         blank = temporary_file(temp, "blank.dl", "\n\nrequest(\"Leela\", \"billing:read\").\n")
         assert run("solve", "--domain", domain, "--facts", blank,
                    policy)["derivedFactCount"] == 2
+
+
+def escaped_symbols():
+    with tempfile.TemporaryDirectory() as temp:
+        domain = temporary_file(temp, "domain.json", json.dumps({
+            "format": "maelys-datalog-domain-v1", "name": "escaped_cli",
+            "predicates": [
+                {"name": "input", "arity": 1, "role": "edb"},
+                {"name": "output", "arity": 1, "role": "idb", "query": True},
+            ], "atoms": [],
+        }))
+        policy = temporary_file(temp, "policy.dl", "output(X) :- input(X).\n")
+        facts = temporary_file(temp, "facts.dl", 'input("quote\\" slash\\\\ alpha\\u03b1").')
+        expected = 'quote" slash\\ alphaα'
+        result = run("solve", "--domain", domain, "--facts", facts, policy)
+        assert result["queries"][0]["facts"] == [[{"kind": "symbol", "value": expected}]]
+        human = text("solve", "--domain", domain, "--facts", facts, policy)
+        assert human == 'output/1 (1 facts):\n  output("quote\\" slash\\\\ alphaα").\n'
+        assert run("explain", "--domain", domain, "--facts", facts,
+                   "--why", "true", policy, "output",
+                   '"quote\\" slash\\\\ alpha\\u03b1"')["present"]
+        controls = temporary_file(temp, "controls.dl",
+                                  'input("line\\u000afeed \\uD83D\\uDE00").')
+        control_result = run("solve", "--domain", domain, "--facts", controls, policy)
+        assert control_result["queries"][0]["facts"][0][0]["value"] == "line\nfeed 😀"
+        assert 'output("line\\u000afeed 😀").' in text(
+            "solve", "--domain", domain, "--facts", controls, policy)
+        for name, literal in (("bad-escape", '"bad\\x"'),
+                              ("bad-surrogate", '"bad\\uD800"'),
+                              ("nul", '"bad\\u0000"')):
+            invalid = temporary_file(temp, f"{name}.dl", f"input({literal}).")
+            assert run("solve", "--domain", domain, "--facts", invalid,
+                       policy, exit_code=1)["code"] == "VALIDATION_FAILED"
+
+
+def schema_arity():
+    schema = json.loads((ROOT / "cli/schemas/solve.json").read_text())
+    valid = run("solve", "--domain", FIXTURE / "rbac.domain.json", "--facts",
+                FIXTURE / "rbac.facts.dl", FIXTURE / "rbac.dl")
+    assert not validate(valid, schema)
+    invalid = json.loads(json.dumps(valid))
+    invalid["queries"][0]["facts"][0].pop()
+    assert validate(invalid, schema)
+    invalid = json.loads(json.dumps(valid))
+    invalid["queries"][0]["facts"][0].extend(invalid["queries"][0]["facts"][0] * 2)
+    assert validate(invalid, schema)
 
 
 def integers_and_manifest():
@@ -214,5 +279,7 @@ def integers_and_manifest():
 if __name__ == "__main__":
     basic()
     malformed()
+    escaped_symbols()
+    schema_arity()
     integers_and_manifest()
     print("cli behavior and schemas: PASS")

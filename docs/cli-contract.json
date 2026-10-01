@@ -855,6 +855,103 @@
               "queries": {
                 "items": {
                   "additionalProperties": false,
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "arity": {
+                            "const": 0
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "facts": {
+                            "items": {
+                              "maxItems": 0,
+                              "minItems": 0
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "arity": {
+                            "const": 1
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "facts": {
+                            "items": {
+                              "maxItems": 1,
+                              "minItems": 1
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "arity": {
+                            "const": 2
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "facts": {
+                            "items": {
+                              "maxItems": 2,
+                              "minItems": 2
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "arity": {
+                            "const": 3
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "facts": {
+                            "items": {
+                              "maxItems": 3,
+                              "minItems": 3
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "arity": {
+                            "const": 4
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "facts": {
+                            "items": {
+                              "maxItems": 4,
+                              "minItems": 4
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ],
                   "properties": {
                     "arity": {
                       "maximum": 4,
@@ -915,6 +1012,7 @@
                             }
                           ]
                         },
+                        "maxItems": 4,
                         "type": "array"
                       },
                       "type": "array"

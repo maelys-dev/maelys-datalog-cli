@@ -1,1 +1,2 @@
-<fingerprint>
+policyFingerprint: <fingerprint>
+executionFingerprint: <fingerprint>

@@ -78,19 +78,96 @@ static int identifier(scanner_t *s, char **out) {
     return 0;
 }
 
+static int hex4(scanner_t *s, uint32_t *out) {
+    uint32_t number = 0;
+    for (size_t i = 0; i < 4u; ++i) {
+        unsigned char c = (unsigned char)*s->at;
+        if (!c) return -1;
+        unsigned digit;
+        if (c >= '0' && c <= '9') digit = c - '0';
+        else if (c >= 'a' && c <= 'f') digit = c - 'a' + 10u;
+        else if (c >= 'A' && c <= 'F') digit = c - 'A' + 10u;
+        else return -1;
+        number = (number << 4) | digit;
+        advance(s);
+    }
+    *out = number;
+    return 0;
+}
+
+static void utf8_write(char **target, uint32_t codepoint) {
+    char *at = *target;
+    if (codepoint < 0x80u) *at++ = (char)codepoint;
+    else if (codepoint < 0x800u) {
+        *at++ = (char)(0xc0u | (codepoint >> 6));
+        *at++ = (char)(0x80u | (codepoint & 0x3fu));
+    } else if (codepoint < 0x10000u) {
+        *at++ = (char)(0xe0u | (codepoint >> 12));
+        *at++ = (char)(0x80u | ((codepoint >> 6) & 0x3fu));
+        *at++ = (char)(0x80u | (codepoint & 0x3fu));
+    } else {
+        *at++ = (char)(0xf0u | (codepoint >> 18));
+        *at++ = (char)(0x80u | ((codepoint >> 12) & 0x3fu));
+        *at++ = (char)(0x80u | ((codepoint >> 6) & 0x3fu));
+        *at++ = (char)(0x80u | (codepoint & 0x3fu));
+    }
+    *target = at;
+}
+
 static int value(scanner_t *s, maelys_datalog_value_t *out,
                  datalog_cli_error_t *error, size_t index) {
     if (*s->at == '"') {
         advance(s);
         out->kind = MAELYS_DATALOG_VALUE_SYMBOL;
         out->as.symbol = s->at;
+        char *target = s->at;
         while (*s->at && *s->at != '"') {
-            if (*s->at == '\\' || (unsigned char)*s->at < 0x20)
-                return fail(error, s, index, "invalid symbol string");
+            unsigned char c = (unsigned char)*s->at;
+            if (c < 0x20u)
+                return fail(error, s, index, "unescaped control in symbol string");
+            if (c != '\\') { *target++ = *s->at; advance(s); continue; }
+            advance(s);
+            c = (unsigned char)*s->at;
+            if (!c) return fail(error, s, index, "unterminated symbol escape");
+            if (c == 'u') {
+                advance(s);
+                uint32_t codepoint;
+                if (hex4(s, &codepoint) != 0)
+                    return fail(error, s, index, "invalid Unicode escape");
+                if (codepoint >= 0xd800u && codepoint <= 0xdbffu) {
+                    if (s->at[0] != '\\' || s->at[1] != 'u')
+                        return fail(error, s, index, "unpaired Unicode surrogate");
+                    advance(s); advance(s);
+                    uint32_t low;
+                    if (hex4(s, &low) != 0 || low < 0xdc00u || low > 0xdfffu)
+                        return fail(error, s, index, "unpaired Unicode surrogate");
+                    codepoint = 0x10000u + ((codepoint - 0xd800u) << 10) +
+                                (low - 0xdc00u);
+                } else if (codepoint >= 0xdc00u && codepoint <= 0xdfffu)
+                    return fail(error, s, index, "unpaired Unicode surrogate");
+                if (!codepoint)
+                    return fail(error, s, index, "NUL in symbol string");
+                utf8_write(&target, codepoint);
+                continue;
+            }
+            char decoded;
+            switch (c) {
+                case '"': decoded = '"'; break;
+                case '\\': decoded = '\\'; break;
+                case '/': decoded = '/'; break;
+                case 'b': decoded = '\b'; break;
+                case 'f': decoded = '\f'; break;
+                case 'n': decoded = '\n'; break;
+                case 'r': decoded = '\r'; break;
+                case 't': decoded = '\t'; break;
+                default: return fail(error, s, index, "invalid symbol escape");
+            }
+            *target++ = decoded;
             advance(s);
         }
         if (!*s->at) return fail(error, s, index, "unterminated symbol string");
-        *s->at = 0; advance(s);
+        advance(s);
+        *target = 0;
         return 0;
     }
     if (*s->at == '-' || (*s->at >= '0' && *s->at <= '9')) {
@@ -121,8 +198,8 @@ static int value(scanner_t *s, maelys_datalog_value_t *out,
     return fail(error, s, index, "expected a quoted symbol, int64 or boolean");
 }
 
-/* No escapes are accepted by the source language's quoted symbols. */
 int datalog_cli_term_parse(char *text, maelys_datalog_value_t *out) {
+    if (!valid_utf8((const unsigned char *)text, strlen(text))) return -1;
     scanner_t s = {text, text, 1, 1};
     datalog_cli_error_t error = {0};
     if (value(&s, out, &error, 0) != 0) return -1;
@@ -132,9 +209,11 @@ int datalog_cli_term_parse(char *text, maelys_datalog_value_t *out) {
 static int read_file(const char *path, char **out, datalog_cli_error_t *error) {
     FILE *file = fopen(path, "rb");
     if (!file) {
-        error->io_error = 1;
+        error->not_found = errno == ENOENT || errno == ENOTDIR;
+        error->io_error = !error->not_found;
         (void)snprintf(error->message, sizeof(error->message),
-                       "cannot open facts: %s", path);
+                       error->not_found ? "facts file not found: %s" :
+                                          "cannot open facts: %s", path);
         return -1;
     }
     const size_t limit = 16u * 1024u * 1024u;
