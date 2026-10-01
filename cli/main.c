@@ -11,9 +11,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #ifndef DATALOG_CLI_VERSION
-#define DATALOG_CLI_VERSION "0.16.0"
+#error "DATALOG_CLI_VERSION must come from the package VERSION"
 #endif
 
 #if defined(MAELYS_DATALOG_EXTENSION_H) || defined(MAELYS_DATALOG_BACKEND_H) || \
@@ -58,8 +59,7 @@ static int status_failure(maelys_cli_context_t *context,
         ? MAELYS_CLI_CODE_UNSUPPORTED : status == MAELYS_DATALOG_STATUS_IO
         ? MAELYS_CLI_CODE_IO_FAILED :
         (status == MAELYS_DATALOG_STATUS_INTERNAL ||
-         status == MAELYS_DATALOG_STATUS_INVALID_STATE ||
-         status == MAELYS_DATALOG_STATUS_INVALID_ARGUMENT)
+         status == MAELYS_DATALOG_STATUS_INVALID_STATE)
         ? MAELYS_CLI_CODE_UNEXPECTED : MAELYS_CLI_CODE_VALIDATION_FAILED;
     return failure(context, code, message);
 }
@@ -266,6 +266,12 @@ static int policy_load(maelys_cli_context_t *context, state_t *state,
             else if (saved == ENOMEM)
                 (void)failure(context, MAELYS_CLI_CODE_UNEXPECTED,
                               "out of memory");
+            else if (saved == ENOENT || saved == ENOTDIR) {
+                char message[320];
+                (void)snprintf(message, sizeof(message),
+                               "policy file not found: %s", file);
+                (void)failure(context, MAELYS_CLI_CODE_NOT_FOUND, message);
+            }
             else (void)maelys_cli_fail_errno(context, MAELYS_CLI_CODE_IO_FAILED,
                                               saved, file);
             return -1;
@@ -276,6 +282,17 @@ static int policy_load(maelys_cli_context_t *context, state_t *state,
             &state->policy, diagnostic);
     }
     if (rc == MAELYS_DATALOG_STATUS_OK) return 0;
+    if (manifest && rc == MAELYS_DATALOG_STATUS_NOT_FOUND) {
+        struct stat metadata;
+        if (stat(manifest, &metadata) != 0 &&
+            (errno == ENOENT || errno == ENOTDIR)) {
+            char message[320];
+            (void)snprintf(message, sizeof(message),
+                           "manifest file not found: %s", manifest);
+            (void)failure(context, MAELYS_CLI_CODE_NOT_FOUND, message);
+            return -1;
+        }
+    }
     if (checking && rc != MAELYS_DATALOG_STATUS_IO &&
         rc != MAELYS_DATALOG_STATUS_INTERNAL &&
         rc != MAELYS_DATALOG_STATUS_NOT_FOUND &&
@@ -426,8 +443,18 @@ static int command_fingerprint(maelys_cli_context_t *context) {
     (void)maelys_cli_json_begin_object(&json);
     identity_json(&json, policy, execution);
     (void)maelys_cli_json_end_object(&json);
+    char human[2u * MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES + 64u];
+    int length = snprintf(human, sizeof(human),
+                          "policyFingerprint: %s\nexecutionFingerprint: %s",
+                          policy, execution);
+    if (length < 0 || (size_t)length >= sizeof(human)) {
+        maelys_cli_json_writer_clear(&json);
+        cleanup(&state);
+        return failure(context, MAELYS_CLI_CODE_UNEXPECTED,
+                       "fingerprint output unavailable");
+    }
     cleanup(&state);
-    return maelys_cli_succeed_writer(context, &json, policy, MAELYS_CLI_EXIT_OK);
+    return maelys_cli_succeed_writer(context, &json, human, MAELYS_CLI_EXIT_OK);
 }
 
 static int solve_common(maelys_cli_context_t *context, state_t *state,

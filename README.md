@@ -26,6 +26,10 @@ identities. In text mode, `solve` prints each selected query's facts in the
 engine's canonical order, including a heading for empty results. In JSON mode,
 typed terms remain JSON strings, exact int64 numbers, or booleans. JavaScript
 clients need a precision-preserving JSON parser above 2^53.
+Quoted symbols in CLI fact files and typed `explain` operands accept JSON
+string escapes, including Unicode surrogate pairs; `solve` prints symbols
+with the same escaping. This input notation does not change the engine's
+policy source language.
 
 To build from source, materialize the pinned checkouts and export the line
 printed by the generated checkout script:
