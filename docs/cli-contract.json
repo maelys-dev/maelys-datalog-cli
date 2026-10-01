@@ -1,0 +1,1256 @@
+{
+  "contract": "agent-cli/v2",
+  "programs": {
+    "maelys-datalog": {
+      "cliApi": 1,
+      "commands": [
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "help",
+          "input": {
+            "constraints": [],
+            "operands": [
+              {
+                "name": "COMMAND_ID",
+                "required": false,
+                "summary": "Stable command identifier whose help is shown.",
+                "variadic": false
+              }
+            ],
+            "options": [],
+            "passthrough": false,
+            "synopsis": "help [COMMAND_ID] | --help"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "commands": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "commands"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "help"
+          ],
+          "purpose": "Show the generated CLI guide or one command's help.",
+          "usage": "help [COMMAND_ID] | --help"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "version",
+          "input": {
+            "constraints": [],
+            "operands": [],
+            "options": [],
+            "passthrough": false,
+            "synopsis": "version | --version"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "cliApi": {
+                "type": "integer"
+              },
+              "contract": {
+                "const": "agent-cli/v2"
+              },
+              "framework": {
+                "type": "string"
+              },
+              "product": {
+                "type": "string"
+              },
+              "program": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "product",
+              "program",
+              "version",
+              "contract",
+              "cliApi",
+              "framework"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "version"
+          ],
+          "purpose": "Return product identity.",
+          "usage": "version | --version"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "describe",
+          "input": {
+            "constraints": [
+              {
+                "kind": "requires",
+                "options": [
+                  "--prefix",
+                  "--summary"
+                ]
+              }
+            ],
+            "operands": [
+              {
+                "name": "COMMAND_ID",
+                "required": false,
+                "summary": "Stable command identifier returned by the catalog.",
+                "variadic": false
+              }
+            ],
+            "options": [
+              {
+                "conflictsWith": [],
+                "long": "--summary",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Return the compact command inventory without output schemas."
+              },
+              {
+                "argument": {
+                  "name": "PREFIX",
+                  "pattern": "^[a-z]([a-z0-9.-]*[a-z0-9-])?$",
+                  "type": "string"
+                },
+                "conflictsWith": [
+                  "COMMAND_ID"
+                ],
+                "long": "--prefix",
+                "repeatable": false,
+                "required": false,
+                "requires": [
+                  "--summary"
+                ],
+                "summary": "Restrict the summary to one command namespace: the command named PREFIX and every command whose identifier starts with PREFIX followed by a dot."
+              }
+            ],
+            "passthrough": false,
+            "synopsis": "describe [COMMAND_ID] [--summary] [--prefix PREFIX]"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "additionalProperties": true,
+            "description": "Command catalog, summary or single descriptor.",
+            "required": [
+              "schemaVersion",
+              "kind",
+              "program",
+              "commands"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "describe"
+          ],
+          "purpose": "Return the machine-readable catalog, summary or one descriptor.",
+          "usage": "describe [COMMAND_ID] [--summary] [--prefix PREFIX]"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "completion",
+          "input": {
+            "constraints": [],
+            "operands": [
+              {
+                "choices": [
+                  "bash",
+                  "zsh",
+                  "fish"
+                ],
+                "name": "SHELL",
+                "required": true,
+                "summary": "Shell whose completion script is printed.",
+                "type": "choice",
+                "variadic": false
+              }
+            ],
+            "options": [],
+            "passthrough": false,
+            "synopsis": "completion SHELL"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "script": {
+                "type": "string"
+              },
+              "shell": {
+                "enum": [
+                  "bash",
+                  "zsh",
+                  "fish"
+                ]
+              }
+            },
+            "required": [
+              "shell",
+              "script"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "completion"
+          ],
+          "purpose": "Print the shell completion script generated from the catalog.",
+          "usage": "completion SHELL"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": true,
+          "id": "complete.candidates",
+          "input": {
+            "constraints": [],
+            "operands": [
+              {
+                "name": "WORDS",
+                "required": false,
+                "summary": "Command line words after the program name; the last one is the prefix being completed.",
+                "variadic": true
+              }
+            ],
+            "options": [],
+            "passthrough": false,
+            "synopsis": "__complete [WORDS...]"
+          },
+          "outputMode": "json-records",
+          "outputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "records": {
+                "items": {
+                  "required": [
+                    "word"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "count",
+              "records"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "__complete"
+          ],
+          "purpose": "Return completion candidates for a partial command line.",
+          "usage": "__complete [WORDS...]"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "check",
+          "input": {
+            "constraints": [
+              {
+                "kind": "requires",
+                "options": [
+                  "--allow-test-only",
+                  "--manifest"
+                ]
+              },
+              {
+                "kind": "requires",
+                "options": [
+                  "--allow-undeclared-policy-atoms",
+                  "--manifest"
+                ]
+              }
+            ],
+            "operands": [
+              {
+                "name": "POLICY",
+                "required": false,
+                "summary": "Inline policy source file.",
+                "variadic": false
+              }
+            ],
+            "options": [
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--domain",
+                "repeatable": true,
+                "required": true,
+                "requires": [],
+                "summary": "Domain JSON declaration."
+              },
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--manifest",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Load a manifest as one policy set."
+              },
+              {
+                "argument": {
+                  "name": "ID",
+                  "type": "string"
+                },
+                "conflictsWith": [],
+                "long": "--policy-id",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Inline policy identifier."
+              },
+              {
+                "conflictsWith": [],
+                "long": "--allow-test-only",
+                "repeatable": false,
+                "required": false,
+                "requires": [
+                  "--manifest"
+                ],
+                "summary": "Admit test-only manifest entries."
+              },
+              {
+                "conflictsWith": [],
+                "long": "--allow-undeclared-policy-atoms",
+                "repeatable": false,
+                "required": false,
+                "requires": [
+                  "--manifest"
+                ],
+                "summary": "Admit policy-local atoms."
+              }
+            ],
+            "passthrough": false,
+            "synopsis": "check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "else": {
+                  "required": [
+                    "diagnostics"
+                  ]
+                },
+                "if": {
+                  "properties": {
+                    "valid": {
+                      "const": true
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "policyFingerprint",
+                    "policyCount",
+                    "normalizedRuleCount",
+                    "policies",
+                    "domains"
+                  ]
+                }
+              }
+            ],
+            "properties": {
+              "diagnostics": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "aggregateLimit": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "arity": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "column": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "comparisonOp": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "comparisonResult": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "depth": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "depthLimit": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "domain": {
+                      "type": "string"
+                    },
+                    "expectedArity": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "expectedKind": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "field": {
+                      "type": "string"
+                    },
+                    "file": {
+                      "type": "string"
+                    },
+                    "hint": {
+                      "type": "string"
+                    },
+                    "index": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "lhsKind": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "limitKind": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "line": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "observedArity": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "observedCount": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "phase": {
+                      "type": "string"
+                    },
+                    "predicate": {
+                      "type": "string"
+                    },
+                    "present": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "rhsKind": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "ruleId": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "source": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "termIndex": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "type": "object"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "domains": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "atoms": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "predicates": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "arity": {
+                            "maximum": 4,
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "query": {
+                            "type": "boolean"
+                          },
+                          "role": {
+                            "enum": [
+                              "edb",
+                              "idb",
+                              "policy_fact"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "arity",
+                          "role",
+                          "query"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "predicates",
+                    "atoms"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "normalizedRuleCount": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "policies": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "index": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "normalizedRuleCount": {
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "index",
+                    "normalizedRuleCount"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "policyCount": {
+                "minimum": 1,
+                "type": "integer"
+              },
+              "policyFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "valid": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "valid"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "check"
+          ],
+          "purpose": "Validate a domain and policy; exit 2 reports rejection.",
+          "usage": "check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "fingerprint",
+          "input": {
+            "constraints": [],
+            "operands": [
+              {
+                "name": "POLICY",
+                "required": false,
+                "summary": "Inline policy source file.",
+                "variadic": false
+              }
+            ],
+            "options": [
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--domain",
+                "repeatable": false,
+                "required": true,
+                "requires": [],
+                "summary": "Domain JSON declaration."
+              },
+              {
+                "argument": {
+                  "name": "ID",
+                  "type": "string"
+                },
+                "conflictsWith": [],
+                "long": "--policy-id",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Inline policy identifier."
+              },
+              {
+                "argument": {
+                  "minimum": 1,
+                  "name": "N",
+                  "type": "unsigned"
+                },
+                "conflictsWith": [],
+                "long": "--work-limit",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Cooperative work limit."
+              }
+            ],
+            "passthrough": false,
+            "synopsis": "fingerprint [POLICY] --domain FILE [--policy-id ID] [--work-limit N]"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "executionFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "policyFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "policyFingerprint",
+              "executionFingerprint"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "fingerprint"
+          ],
+          "purpose": "Read policy and execution identities.",
+          "usage": "fingerprint [POLICY] --domain FILE [--policy-id ID] [--work-limit N]"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "solve",
+          "input": {
+            "constraints": [],
+            "operands": [
+              {
+                "name": "POLICY",
+                "required": false,
+                "summary": "Inline policy source file.",
+                "variadic": false
+              }
+            ],
+            "options": [
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--domain",
+                "repeatable": false,
+                "required": true,
+                "requires": [],
+                "summary": "Domain JSON declaration."
+              },
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--facts",
+                "repeatable": false,
+                "required": true,
+                "requires": [],
+                "summary": "Closed EDB facts."
+              },
+              {
+                "argument": {
+                  "name": "ID",
+                  "type": "string"
+                },
+                "conflictsWith": [],
+                "long": "--policy-id",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Inline policy identifier."
+              },
+              {
+                "argument": {
+                  "name": "PRED[/ARITY]",
+                  "type": "string"
+                },
+                "conflictsWith": [],
+                "long": "--query",
+                "repeatable": true,
+                "required": false,
+                "requires": [],
+                "summary": "Query a declared predicate."
+              },
+              {
+                "argument": {
+                  "minimum": 1,
+                  "name": "N",
+                  "type": "unsigned"
+                },
+                "conflictsWith": [],
+                "long": "--work-limit",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Cooperative work limit."
+              }
+            ],
+            "passthrough": false,
+            "synopsis": "solve [POLICY] --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "derivedFactCount": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "executionFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "policyFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "queries": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "arity": {
+                      "maximum": 4,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "facts": {
+                      "items": {
+                        "items": {
+                          "oneOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "kind": {
+                                  "const": "symbol"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "kind": {
+                                  "const": "integer"
+                                },
+                                "value": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "kind": {
+                                  "const": "boolean"
+                                },
+                                "value": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      "type": "array"
+                    },
+                    "predicate": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "predicate",
+                    "arity",
+                    "facts"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "policyFingerprint",
+              "executionFingerprint",
+              "derivedFactCount",
+              "queries"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "solve"
+          ],
+          "purpose": "Solve an inline policy against one EDB batch.",
+          "usage": "solve [POLICY] --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "explain",
+          "input": {
+            "constraints": [],
+            "operands": [
+              {
+                "name": "POLICY",
+                "required": true,
+                "summary": "Inline policy source file.",
+                "variadic": false
+              },
+              {
+                "name": "PREDICATE",
+                "required": true,
+                "summary": "Queryable predicate name.",
+                "variadic": false
+              },
+              {
+                "name": "TERMS",
+                "required": false,
+                "summary": "Typed query terms: 3, true or quoted symbol.",
+                "variadic": true
+              }
+            ],
+            "options": [
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--domain",
+                "repeatable": false,
+                "required": true,
+                "requires": [],
+                "summary": "Domain JSON declaration."
+              },
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--facts",
+                "repeatable": false,
+                "required": true,
+                "requires": [],
+                "summary": "Closed EDB facts."
+              },
+              {
+                "argument": {
+                  "choices": [
+                    "true",
+                    "false"
+                  ],
+                  "name": "VALUE",
+                  "type": "choice"
+                },
+                "conflictsWith": [],
+                "long": "--why",
+                "repeatable": false,
+                "required": true,
+                "requires": [],
+                "summary": "Explain presence or absence."
+              },
+              {
+                "argument": {
+                  "name": "ID",
+                  "type": "string"
+                },
+                "conflictsWith": [],
+                "long": "--policy-id",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Inline policy identifier."
+              },
+              {
+                "argument": {
+                  "minimum": 1,
+                  "name": "N",
+                  "type": "unsigned"
+                },
+                "conflictsWith": [],
+                "long": "--work-limit",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Cooperative work limit."
+              }
+            ],
+            "passthrough": false,
+            "synopsis": "explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true|false [--policy-id ID] [--work-limit N]"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "document": {
+                "pattern": "^MAELYS-DATALOG-v2\\n",
+                "type": "string"
+              },
+              "executionFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "policyFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "predicate": {
+                "type": "string"
+              },
+              "present": {
+                "type": "boolean"
+              },
+              "why": {
+                "enum": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            "required": [
+              "policyFingerprint",
+              "executionFingerprint",
+              "predicate",
+              "present",
+              "why",
+              "document"
+            ],
+            "type": "object"
+          },
+          "pattern": [
+            "explain"
+          ],
+          "purpose": "Explain a typed query against a solved policy.",
+          "usage": "explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true|false [--policy-id ID] [--work-limit N]"
+        }
+      ],
+      "contract": "agent-cli/v2",
+      "globalOptions": [
+        {
+          "argument": {
+            "choices": [
+              "text",
+              "json",
+              "jsonl"
+            ],
+            "name": "VALUE",
+            "type": "choice"
+          },
+          "conflictsWith": [],
+          "default": "text",
+          "long": "--format",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Select text for humans, json for one envelope or jsonl for records."
+        },
+        {
+          "conflictsWith": [],
+          "long": "--json",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Exact alias of --format json."
+        },
+        {
+          "conflictsWith": [],
+          "long": "--compact",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Render JSON on a single line."
+        },
+        {
+          "conflictsWith": [],
+          "long": "--pretty",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "--pretty=false selects compact JSON."
+        },
+        {
+          "conflictsWith": [],
+          "long": "--non-interactive",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Never prompt; fail instead of asking a question."
+        },
+        {
+          "argument": {
+            "choices": [
+              "auto",
+              "always",
+              "never"
+            ],
+            "name": "VALUE",
+            "type": "choice"
+          },
+          "conflictsWith": [],
+          "default": "auto",
+          "long": "--color",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Control ANSI colors on terminals."
+        },
+        {
+          "argument": {
+            "choices": [
+              "auto",
+              "always",
+              "never"
+            ],
+            "name": "VALUE",
+            "type": "choice"
+          },
+          "conflictsWith": [],
+          "default": "auto",
+          "long": "--progress",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Show the progress of a long run on stderr in text mode: auto only when stderr is a terminal."
+        },
+        {
+          "conflictsWith": [],
+          "long": "--verbose",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Add the details of the run on stderr in text mode; silent in JSON."
+        },
+        {
+          "argument": {
+            "choices": [
+              "auto",
+              "always",
+              "never"
+            ],
+            "name": "VALUE",
+            "type": "choice"
+          },
+          "conflictsWith": [],
+          "default": "auto",
+          "long": "--pager",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Page the text rendering when stdout is a terminal; never in a pipe, in JSON or under --non-interactive."
+        },
+        {
+          "argument": {
+            "name": "NAME",
+            "type": "string"
+          },
+          "conflictsWith": [],
+          "long": "--field",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Render one top-level member of data instead of the whole result, by the text or jsonl rendering rules."
+        },
+        {
+          "conflictsWith": [],
+          "long": "--help",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Show the help of the selected command."
+        }
+      ],
+      "invariants": [
+        "usage and agent discovery share one catalog",
+        "transactional commands plan by default and require --apply",
+        "stdout carries success data; stderr carries failures",
+        "--json and --format json are identical",
+        "unknown or duplicated options are refused",
+        "stream commands reject envelope rendering flags",
+        "external commands receive their arguments verbatim"
+      ],
+      "kind": "catalog",
+      "output": {
+        "contract": "agent-cli/v2",
+        "schemaVersion": 2,
+        "stderr": "diagnostics and failure envelopes",
+        "stdout": "success data only; protocol streams are explicit exceptions"
+      },
+      "product": "Maelys Datalog",
+      "program": "maelys-datalog",
+      "schemaVersion": 1
+    }
+  }
+}

@@ -1,0 +1,51 @@
+# typed: strict
+# frozen_string_literal: true
+
+# The renderer copies every dependency pin from this tag's source archive.
+class MaelysDatalog < Formula
+  desc "Command-line policy validation, solving and explanations for Maelys Datalog"
+  homepage "https://github.com/maelys-dev/maelys-datalog-cli"
+  url "@URL@"
+  sha256 "@SHA256@"
+  license "MPL-2.0"
+
+  depends_on "cmake" => :build
+  depends_on "git" => :build
+
+  resource "maelys-datalog" do
+    url "https://github.com/maelys-dev/maelys-datalog.git",
+        tag: "@ENGINE_TAG@", revision: "@ENGINE_PIN@"
+  end
+
+  resource "maelys-cli" do
+    url "https://github.com/maelys-dev/maelys-cli.git",
+        tag: "@CLI_TAG@", revision: "@CLI_PIN@"
+  end
+
+  resource "maelys-json" do
+    url "https://github.com/maelys-dev/maelys-json.git",
+        tag: "@JSON_TAG@", revision: "@JSON_PIN@"
+  end
+
+  def install
+    ENV.deparallelize
+    dependencies = buildpath/"vendor"
+    resource("maelys-datalog").stage dependencies/"maelys-datalog"
+    resource("maelys-cli").stage dependencies/"maelys-cli"
+    resource("maelys-json").stage dependencies/"maelys-json"
+    system "make", "install", "PREFIX=#{prefix}",
+           "MAELYS_DEPENDENCIES_DIR=#{dependencies}"
+  end
+
+  test do
+    assert_equal "maelys-datalog @VERSION@",
+                 shell_output("#{bin}/maelys-datalog version").strip
+    (testpath/"domain.json").write <<~JSON
+      {"format":"maelys-datalog-domain-v1","name":"brew_smoke","predicates":[{"name":"input","arity":1,"role":"edb"},{"name":"allow","arity":1,"role":"idb","query":true}],"atoms":[]}
+    JSON
+    (testpath/"policy.dl").write "allow(X) :- input(X).\n"
+    (testpath/"facts.dl").write "input(\"ok\").\n"
+    result = shell_output("#{bin}/maelys-datalog solve --domain #{testpath}/domain.json --facts #{testpath}/facts.dl #{testpath}/policy.dl")
+    assert_match 'allow("ok").', result
+  end
+end

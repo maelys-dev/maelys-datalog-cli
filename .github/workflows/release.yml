@@ -1,0 +1,51 @@
+name: release
+
+# Managed by maelys-release v0.62.2 (0.62.2). Regenerate with
+# 'maelys-release adopt' of maelys-release; do not edit by hand.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing signed tag whose release and Homebrew publication are replayed
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    uses: maelys-dev/maelys-release/.github/workflows/release.yml@5148671abf3a1b437025881d10fd768efb9de5b3 # v0.62.2
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    with:
+      product: maelys-datalog-cli
+      tag: ${{ inputs.tag || github.ref_name }}
+      dependency_checkout: |
+        sh scripts/checkout-dependencies.sh "$RUNNER_TEMP/dependencies" >>"$GITHUB_ENV"
+      verify_command: bash scripts/verify-release.sh TARGET
+      linux_packages: build-essential dpkg-dev file rpm cmake
+      macos_packages: cmake
+
+  tap-maelys-datalog:
+    needs: release
+    if: needs.release.result == 'success'
+    uses: maelys-dev/maelys-release/.github/workflows/tap.yml@5148671abf3a1b437025881d10fd768efb9de5b3 # v0.62.2
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    with:
+      product: maelys-datalog
+      tag: ${{ inputs.tag || github.ref_name }}
+      render_command: sh scripts/render-homebrew-formula.sh TAG OUTPUT maelys-datalog
+      bottles: '["macos-15","macos-26"]'
+    secrets:
+      tap_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      tap_signing_key: ${{ secrets.HOMEBREW_TAP_SIGNING_KEY }}
