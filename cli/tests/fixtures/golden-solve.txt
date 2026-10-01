@@ -1,0 +1,4 @@
+allow/2 (1 facts):
+  allow("Leela", "billing:read").
+can_deliver/1 (1 facts):
+  can_deliver("Leela").
