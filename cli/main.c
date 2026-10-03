@@ -307,21 +307,29 @@ static int policy_load(maelys_cli_context_t *context, state_t *state,
 static int make_session(maelys_cli_context_t *context, state_t *state,
                         size_t index, int explanations) {
     maelys_datalog_session_config_t *config = NULL;
+    uint64_t work_limit = 0;
+    int unsupported_work_limit = 0;
     maelys_datalog_status_t rc = maelys_datalog_session_config_create(&config);
     if (rc == MAELYS_DATALOG_STATUS_OK && maelys_cli_option(context, "work-limit")) {
-        uint64_t limit = 0;
-        (void)maelys_cli_option_unsigned(context, "work-limit", &limit);
-        rc = maelys_datalog_session_config_set_work_limit(config, limit);
+        (void)maelys_cli_option_unsigned(context, "work-limit", &work_limit);
+        rc = maelys_datalog_session_config_set_work_limit(config, work_limit);
     }
     if (rc == MAELYS_DATALOG_STATUS_OK && explanations)
         rc = maelys_datalog_session_config_set_explanation_workspace(
             config, MAELYS_DATALOG_EXPLAIN_TRUE | MAELYS_DATALOG_EXPLAIN_FALSE);
-    if (rc == MAELYS_DATALOG_STATUS_OK)
+    if (rc == MAELYS_DATALOG_STATUS_OK) {
         rc = maelys_datalog_session_create_configured(state->policy, index,
                                                        config, &state->session);
+        unsupported_work_limit = rc == MAELYS_DATALOG_STATUS_UNSUPPORTED && work_limit != 0;
+    }
     (void)maelys_datalog_session_config_free(config);
     if (rc != MAELYS_DATALOG_STATUS_OK) {
-        (void)status_failure(context, rc, NULL);
+        if (unsupported_work_limit)
+            (void)failure(context, MAELYS_CLI_CODE_UNSUPPORTED,
+                          "--work-limit requires WORK_LIMIT capability; the reference backend "
+                          "does not support a nonzero work limit");
+        else
+            (void)status_failure(context, rc, NULL);
         return -1;
     }
     return 0;
@@ -870,21 +878,21 @@ static const maelys_cli_option_t policy_options[] = {
 static const maelys_cli_option_t fingerprint_options[] = {
     {MAELYS_CLI_PATH("domain", "FILE", "Domain JSON declaration."), .required = 1},
     {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
-    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit.", 1u, 0u)},
+    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit (unsupported by the reference backend).", 1u, 0u)},
 };
 static const maelys_cli_option_t solve_options[] = {
     {MAELYS_CLI_PATH("domain", "FILE", "Domain JSON declaration."), .required = 1},
     {MAELYS_CLI_PATH("facts", "FILE", "Closed EDB facts."), .required = 1},
     {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
     {MAELYS_CLI_STRING("query", "PRED[/ARITY]", "Query a declared predicate."), .repeatable = 1},
-    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit.", 1u, 0u)},
+    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit (unsupported by the reference backend).", 1u, 0u)},
 };
 static const maelys_cli_option_t explain_options[] = {
     {MAELYS_CLI_PATH("domain", "FILE", "Domain JSON declaration."), .required = 1},
     {MAELYS_CLI_PATH("facts", "FILE", "Closed EDB facts."), .required = 1},
     {MAELYS_CLI_CHOICE("why", "Explain presence or absence.", why_choices), .required = 1},
     {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
-    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit.", 1u, 0u)},
+    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit (unsupported by the reference backend).", 1u, 0u)},
 };
 static const maelys_cli_command_t commands[] = {
     {MAELYS_CLI_READ("check", "check", "Validate a domain and policy; exit 2 reports rejection.",

@@ -120,8 +120,19 @@ def basic():
                "--query", "missing", policy, exit_code=1)["code"] == "NOT_FOUND"
     assert run("explain", "--domain", domain, "--facts", facts,
                "--why", "false", policy, "can_deliver", exit_code=1)["code"] == "VALIDATION_FAILED"
-    assert run("solve", "--domain", domain, "--facts", facts,
-               "--work-limit", "1", policy, exit_code=1)["code"] == "UNSUPPORTED"
+    work_limit_message = (
+        "--work-limit requires WORK_LIMIT capability; the reference backend "
+        "does not support a nonzero work limit")
+    for command, args in (
+        ("fingerprint", ("--domain", domain, policy)),
+        ("solve", ("--domain", domain, "--facts", facts, policy)),
+        ("explain", ("--domain", domain, "--facts", facts,
+                     "--why", "true", policy, "can_deliver", '"Leela"')),
+    ):
+        error = run(command, *args, "--work-limit", "1", exit_code=1)
+        assert error["code"] == "UNSUPPORTED"
+        assert error["message"] == work_limit_message
+        assert work_limit_message in text(command, *args, "--work-limit", "1", exit_code=1)
     assert run("check", "--domain", domain, "--policy-id", "", policy,
                exit_code=1)["code"] == "VALIDATION_FAILED"
     version = subprocess.run([str(BINARY), "--version"], capture_output=True,
