@@ -4,7 +4,7 @@
   "required": ["valid"],
   "properties": {
     "valid": {"type": "boolean"},
-    "policyFingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "policyFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "policyCount": {"type": "integer", "minimum": 0},
     "normalizedRuleCount": {"type": "integer", "minimum": 0},
     "policies": {
@@ -79,8 +79,8 @@
      "then": {
        "required": ["policyFingerprint", "policyCount", "normalizedRuleCount", "policies", "domains"],
        "if": {"properties": {"policyCount": {"const": 0}}},
-       "then": {"properties": {"policyFingerprint": {"type": "null"}, "normalizedRuleCount": {"const": 0}, "policies": {"maxItems": 0}}},
-       "else": {"properties": {"policyFingerprint": {"type": "string"}, "policies": {"minItems": 1}}}
+       "then": {"properties": {"normalizedRuleCount": {"const": 0}, "policies": {"maxItems": 0}}},
+       "else": {"properties": {"policies": {"minItems": 1}}}
      },
      "else": {"required": ["diagnostics"]}}
   ],

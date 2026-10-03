@@ -3,7 +3,7 @@
   "type": "object", "additionalProperties": false,
   "required": ["policyFingerprint", "policies"],
   "properties": {
-    "policyFingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "policyFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "policies": {
       "type": "array", "items": {
         "type": "object", "additionalProperties": false,
@@ -25,8 +25,5 @@
         }
       }
     }
-  },
-  "if": {"properties": {"policies": {"maxItems": 0}}},
-  "then": {"properties": {"policyFingerprint": {"type": "null"}}},
-  "else": {"properties": {"policyFingerprint": {"type": "string"}}}
+  }
 }

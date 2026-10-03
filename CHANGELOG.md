@@ -4,6 +4,22 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+## 0.3.0 — 2026-10-03
+
+### Changed
+
+- Pin `maelys-datalog` to v0.21.0, `maelys-cli` to v0.5.33 and the
+  `maelys-release` socle to v0.62.3. The `maelys-json` v0.2.0 and
+  `agent-cli-spec` v2.6.0 pins remain the latest published versions.
+- Adopt the SDK's live empty-set contract directly. `check` and `queries`
+  now return the deterministic engine policy fingerprint for an empty manifest
+  instead of `null`; their data schemas require a fingerprint string. Remove
+  the v0.20.0 empty-count compatibility probe. Nonempty policy identities and
+  text output keep their existing behavior.
+- Regenerate the CLI reference and release workflows with the updated socle.
+  Homebrew bottle jobs now run the formula's tests on the poured bottle before
+  publishing the formula to the tap.
+
 ## 0.2.0 — 2026-10-03
 
 ### Added

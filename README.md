@@ -3,7 +3,7 @@
 `maelys-datalog` is a command-line consumer of the public Maelys Datalog SDK.
 It validates policies and domains, reports fingerprints, solves a batch of
 facts, and renders Why-true or Why-false explanations. The engine is a pinned
-dependency at v0.20.0; this repository does not contain or modify its sources.
+dependency at v0.21.0; this repository does not contain or modify its sources.
 
 The command follows [agent-cli/v2](docs/cli.md). Run
 `maelys-datalog describe --summary --format json` for its machine-readable
@@ -25,8 +25,8 @@ maelys-datalog explain --domain cli/tests/fixtures/rbac.domain.json \
 `check` and `queries` also accept `--manifest FILE` and repeated `--domain`
 declarations for multi-domain policy sets. `check` reports each enabled policy's
 identifier and normalized rule count. A manifest with no enabled policies is
-valid and reports zero policies and a null policy fingerprint, because the SDK
-does not fingerprint empty sets. `queries` lists each enabled policy's domain
+valid and reports zero policies and the SDK's deterministic policy fingerprint,
+including for an empty set. `queries` lists each enabled policy's domain
 and effectively authorized predicate/arity pairs, applying the manifest's
 whitelist; an absent or empty whitelist authorizes no queries. The command
 prepares one session at a time for inspection and does not solve facts.

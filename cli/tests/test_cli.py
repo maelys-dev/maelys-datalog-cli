@@ -328,15 +328,25 @@ def integers_and_manifest():
         checked = run("check", "--domain", domain, "--domain", domain2,
                       "--manifest", manifest_path)
         assert checked["valid"] and checked["policyCount"] == 0
-        assert checked["policyFingerprint"] is None
+        fingerprint = checked["policyFingerprint"]
+        assert re.fullmatch(r"[0-9a-f]{64}", fingerprint)
         assert checked["policies"] == [] and checked["normalizedRuleCount"] == 0
-        invalid_empty = dict(checked, policyFingerprint="0" * 64)
+        invalid_empty = dict(checked, policyFingerprint=None)
         assert validate(invalid_empty, json.loads((ROOT / "cli/schemas/check.json").read_text()))
         empty = run("queries", "--domain", domain, "--domain", domain2,
                     "--manifest", manifest_path)
-        assert empty["policies"] == [] and empty["policyFingerprint"] is None
+        assert empty["policies"] == [] and empty["policyFingerprint"] == fingerprint
+        assert validate(dict(empty, policyFingerprint=None),
+                        json.loads((ROOT / "cli/schemas/queries.json").read_text()))
         assert text("queries", "--domain", domain, "--domain", domain2,
                     "--manifest", manifest_path) == "No enabled policies.\n"
+        # Disabled entries and manifest formatting do not change the SDK identity.
+        manifest["policies"] = []
+        manifest_path.write_text(json.dumps(manifest, indent=2))
+        assert run("check", "--domain", domain, "--domain", domain2,
+                   "--manifest", manifest_path)["policyFingerprint"] == fingerprint
+        assert run("queries", "--domain", domain, "--domain", domain2,
+                   "--manifest", manifest_path)["policyFingerprint"] == fingerprint
 
 
 def manifest_query_whitelist():
