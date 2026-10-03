@@ -3,7 +3,7 @@
 `maelys-datalog` is a command-line consumer of the public Maelys Datalog SDK.
 It validates policies and domains, reports fingerprints, solves a batch of
 facts, and renders Why-true or Why-false explanations. The engine is a pinned
-dependency at v0.17.0; this repository does not contain or modify its sources.
+dependency at v0.20.0; this repository does not contain or modify its sources.
 
 The command follows [agent-cli/v2](docs/cli.md). Run
 `maelys-datalog describe --summary --format json` for its machine-readable
@@ -13,6 +13,8 @@ is a strict JSON file parsed with `maelys-json`.
 ```sh
 maelys-datalog check --domain cli/tests/fixtures/rbac.domain.json \
   cli/tests/fixtures/rbac.dl --format json
+maelys-datalog queries --domain cli/tests/fixtures/rbac.domain.json \
+  cli/tests/fixtures/rbac.dl
 maelys-datalog solve --domain cli/tests/fixtures/rbac.domain.json \
   --facts cli/tests/fixtures/rbac.facts.dl cli/tests/fixtures/rbac.dl
 maelys-datalog explain --domain cli/tests/fixtures/rbac.domain.json \
@@ -20,8 +22,15 @@ maelys-datalog explain --domain cli/tests/fixtures/rbac.domain.json \
   cli/tests/fixtures/rbac.dl can_deliver '"Mallory"' --format json
 ```
 
-`check` also accepts `--manifest FILE` and repeated `--domain` declarations
-for multi-domain policy sets. `fingerprint` reports policy and execution
+`check` and `queries` also accept `--manifest FILE` and repeated `--domain`
+declarations for multi-domain policy sets. `check` reports each enabled policy's
+identifier and normalized rule count. A manifest with no enabled policies is
+valid and reports zero policies and a null policy fingerprint, because the SDK
+does not fingerprint empty sets. `queries` lists each enabled policy's domain
+and effectively authorized predicate/arity pairs, applying the manifest's
+whitelist; an absent or empty whitelist authorizes no queries. The command
+prepares one session at a time for inspection and does not solve facts.
+`fingerprint` reports policy and execution
 identities. In text mode, `solve` prints each selected query's facts in the
 engine's canonical order, including a heading for empty results. In JSON mode,
 typed terms remain JSON strings, exact int64 numbers, or booleans. JavaScript
@@ -30,6 +39,12 @@ Quoted symbols in CLI fact files and typed `explain` operands accept JSON
 string escapes, including Unicode surrogate pairs; `solve` prints symbols
 with the same escaping. This input notation does not change the engine's
 policy source language.
+
+Install the published command from the Maelys Homebrew tap:
+
+```sh
+brew install maelys-dev/tap/maelys-datalog
+```
 
 To build from source, materialize the pinned checkouts and export the line
 printed by the generated checkout script:

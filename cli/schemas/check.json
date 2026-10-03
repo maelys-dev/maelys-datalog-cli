@@ -4,15 +4,16 @@
   "required": ["valid"],
   "properties": {
     "valid": {"type": "boolean"},
-    "policyFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "policyCount": {"type": "integer", "minimum": 1},
+    "policyFingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "policyCount": {"type": "integer", "minimum": 0},
     "normalizedRuleCount": {"type": "integer", "minimum": 0},
     "policies": {
       "type": "array",
       "items": {
-        "type": "object", "required": ["index", "normalizedRuleCount"],
+        "type": "object", "required": ["index", "policyId", "normalizedRuleCount"],
         "properties": {
           "index": {"type": "integer", "minimum": 0},
+          "policyId": {"type": "string", "minLength": 1},
           "normalizedRuleCount": {"type": "integer", "minimum": 0}
         }, "additionalProperties": false
       }
@@ -75,7 +76,12 @@
   },
   "allOf": [
     {"if": {"properties": {"valid": {"const": true}}},
-     "then": {"required": ["policyFingerprint", "policyCount", "normalizedRuleCount", "policies", "domains"]},
+     "then": {
+       "required": ["policyFingerprint", "policyCount", "normalizedRuleCount", "policies", "domains"],
+       "if": {"properties": {"policyCount": {"const": 0}}},
+       "then": {"properties": {"policyFingerprint": {"type": "null"}, "normalizedRuleCount": {"const": 0}, "policies": {"maxItems": 0}}},
+       "else": {"properties": {"policyFingerprint": {"type": "string"}, "policies": {"minItems": 1}}}
+     },
      "else": {"required": ["diagnostics"]}}
   ],
   "additionalProperties": false

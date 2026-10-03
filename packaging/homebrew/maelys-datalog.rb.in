@@ -49,5 +49,7 @@ class MaelysDatalog < Formula
               "--facts #{testpath}/facts.dl #{testpath}/policy.dl"
     result = shell_output(command)
     assert_match 'allow("ok").', result
+    queries = shell_output("#{bin}/maelys-datalog queries --domain #{testpath}/domain.json #{testpath}/policy.dl")
+    assert_match "allow/1", queries
   end
 end
