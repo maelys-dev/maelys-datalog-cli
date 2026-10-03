@@ -913,7 +913,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Cooperative work limit."
+                "summary": "Cooperative work limit (unsupported by the reference backend)."
               }
             ],
             "passthrough": false,
@@ -1026,7 +1026,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Cooperative work limit."
+                "summary": "Cooperative work limit (unsupported by the reference backend)."
               }
             ],
             "passthrough": false,
@@ -1339,7 +1339,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Cooperative work limit."
+                "summary": "Cooperative work limit (unsupported by the reference backend)."
               }
             ],
             "passthrough": false,

@@ -4,6 +4,15 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+## 0.3.1 — 2026-10-03
+
+### Fixed
+
+- Explain that a nonzero `--work-limit` requires the backend's `WORK_LIMIT`
+  capability, which the reference backend does not support. Keep the
+  `UNSUPPORTED` error code and exit status 1 in text and JSON reports, and
+  document the restriction in the generated command help and reference.
+
 ## 0.3.0 — 2026-10-03
 
 ### Changed
