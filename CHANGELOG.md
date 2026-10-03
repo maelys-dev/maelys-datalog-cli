@@ -15,7 +15,8 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ### Changed
 
-- Pin the engine SDK to v0.20.0 and remove the obsolete engine CLI CMake option.
+- Pin the `maelys-datalog` engine SDK to v0.20.0 and remove the obsolete engine
+  CLI CMake option.
   Read-only program inspection uses the installed public `datalog_program.h`;
   provider and module headers remain forbidden.
 
