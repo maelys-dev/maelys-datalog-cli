@@ -421,9 +421,6 @@
                     "properties": {
                       "policies": {
                         "minItems": 1
-                      },
-                      "policyFingerprint": {
-                        "type": "string"
                       }
                     }
                   },
@@ -448,9 +445,6 @@
                       },
                       "policies": {
                         "maxItems": 0
-                      },
-                      "policyFingerprint": {
-                        "type": "null"
                       }
                     }
                   }
@@ -677,10 +671,7 @@
               },
               "policyFingerprint": {
                 "pattern": "^[0-9a-f]{64}$",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               },
               "valid": {
                 "type": "boolean"
@@ -798,20 +789,6 @@
           "outputSchema": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "additionalProperties": false,
-            "else": {
-              "properties": {
-                "policyFingerprint": {
-                  "type": "string"
-                }
-              }
-            },
-            "if": {
-              "properties": {
-                "policies": {
-                  "maxItems": 0
-                }
-              }
-            },
             "properties": {
               "policies": {
                 "items": {
@@ -864,23 +841,13 @@
               },
               "policyFingerprint": {
                 "pattern": "^[0-9a-f]{64}$",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               }
             },
             "required": [
               "policyFingerprint",
               "policies"
             ],
-            "then": {
-              "properties": {
-                "policyFingerprint": {
-                  "type": "null"
-                }
-              }
-            },
             "type": "object"
           },
           "pattern": [

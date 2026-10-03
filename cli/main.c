@@ -329,26 +329,8 @@ static int make_session(maelys_cli_context_t *context, state_t *state,
 
 static void identity_json(maelys_cli_json_writer_t *json, const char *policy,
                           const char *execution) {
-    (void)maelys_cli_json_key(json, "policyFingerprint");
-    if (policy) (void)maelys_cli_json_string(json, policy);
-    else (void)maelys_cli_json_null(json);
+    (void)maelys_cli_json_key_string(json, "policyFingerprint", policy);
     if (execution) (void)maelys_cli_json_key_string(json, "executionFingerprint", execution);
-}
-
-static maelys_datalog_status_t enabled_policy_count(
-    const maelys_datalog_policy_t *policy, size_t *count) {
-    maelys_datalog_status_t rc = maelys_datalog_policy_count(policy, count);
-    /* The historical count accessor rejects an empty set. The ID accessor
-     * distinguishes a live handle with no index 0 (NOT_FOUND) from a released
-     * handle (INVALID_STATE), without interpreting engine-private storage. */
-    if (rc == MAELYS_DATALOG_STATUS_INVALID_STATE) {
-        const char *id = NULL;
-        if (maelys_datalog_policy_id(policy, 0u, &id) == MAELYS_DATALOG_STATUS_NOT_FOUND) {
-            *count = 0u;
-            return MAELYS_DATALOG_STATUS_OK;
-        }
-    }
-    return rc;
 }
 
 static int command_check(maelys_cli_context_t *context) {
@@ -370,9 +352,9 @@ static int command_check(maelys_cli_context_t *context) {
     if (rc != 0) { cleanup(&state); return 1; }
     size_t policy_count = 0, total_rules = 0;
     char fingerprint[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
-    if (enabled_policy_count(state.policy, &policy_count) != MAELYS_DATALOG_STATUS_OK ||
-        (policy_count && maelys_datalog_policy_fingerprint(state.policy, fingerprint) !=
-                         MAELYS_DATALOG_STATUS_OK)) {
+    if (maelys_datalog_policy_count(state.policy, &policy_count) != MAELYS_DATALOG_STATUS_OK ||
+        maelys_datalog_policy_fingerprint(state.policy, fingerprint) !=
+                         MAELYS_DATALOG_STATUS_OK) {
         cleanup(&state); return failure(context, MAELYS_CLI_CODE_UNEXPECTED,
                                         "policy introspection failed");
     }
@@ -380,7 +362,7 @@ static int command_check(maelys_cli_context_t *context) {
     maelys_cli_json_writer_init(&json);
     (void)maelys_cli_json_begin_object(&json);
     (void)maelys_cli_json_key_boolean(&json, "valid", 1);
-    identity_json(&json, policy_count ? fingerprint : NULL, NULL);
+    identity_json(&json, fingerprint, NULL);
     (void)maelys_cli_json_key_unsigned(&json, "policyCount", (uint64_t)policy_count);
     (void)maelys_cli_json_key(&json, "policies");
     (void)maelys_cli_json_begin_array(&json);
@@ -574,8 +556,8 @@ static int command_queries(maelys_cli_context_t *context) {
     if (load_policy(context, &state, &error) != 0) { cleanup(&state); return 1; }
     size_t policy_count = 0;
     char fingerprint[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
-    maelys_datalog_status_t rc = enabled_policy_count(state.policy, &policy_count);
-    if (rc == MAELYS_DATALOG_STATUS_OK && policy_count)
+    maelys_datalog_status_t rc = maelys_datalog_policy_count(state.policy, &policy_count);
+    if (rc == MAELYS_DATALOG_STATUS_OK)
         rc = maelys_datalog_policy_fingerprint(state.policy, fingerprint);
     if (rc != MAELYS_DATALOG_STATUS_OK) {
         cleanup(&state); return status_failure(context, rc, NULL);
@@ -584,7 +566,7 @@ static int command_queries(maelys_cli_context_t *context) {
     maelys_cli_json_writer_init(&json);
     human_text_t human = {0};
     (void)maelys_cli_json_begin_object(&json);
-    identity_json(&json, policy_count ? fingerprint : NULL, NULL);
+    identity_json(&json, fingerprint, NULL);
     (void)maelys_cli_json_key(&json, "policies");
     (void)maelys_cli_json_begin_array(&json);
     /* Inspect one prepared policy at a time. Names are borrowed from the live
