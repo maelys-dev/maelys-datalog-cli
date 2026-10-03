@@ -62,7 +62,20 @@ def basic():
     checked = run("check", "--domain", domain, policy)
     assert checked["valid"] and checked["normalizedRuleCount"] == 2
     assert checked["policyCount"] == 1
+    assert checked["policies"][0]["policyId"] == "cli"
     assert checked["domains"][0]["predicates"][3]["query"] is True
+    queries = run("queries", "--domain", domain, policy)
+    assert queries["policyFingerprint"] == checked["policyFingerprint"]
+    assert queries["policies"] == [{
+        "index": 0, "policyId": "cli", "domain": "rbac_cli", "queries": [
+            {"predicate": "allow", "arity": 2},
+            {"predicate": "can_deliver", "arity": 1},
+        ],
+    }]
+    named = run("check", "--domain", domain, "--policy-id", "named", policy)
+    assert named["policies"][0]["policyId"] == "named"
+    assert run("queries", "--domain", domain, "--policy-id", "named", policy)[
+        "policies"][0]["policyId"] == "named"
     identity = run("fingerprint", "--domain", domain, policy)
     assert identity["policyFingerprint"] == checked["policyFingerprint"]
     assert text("fingerprint", "--domain", domain, policy) == (
@@ -89,6 +102,7 @@ def basic():
     assert "document=why-false" in no["document"]
     for command, args in (
         ("check", ("--domain", domain, policy)),
+        ("queries", ("--domain", domain, policy)),
         ("fingerprint", ("--domain", domain, policy)),
         ("solve", ("--domain", domain, "--facts", facts, policy)),
         ("explain", ("--domain", domain, "--facts", facts,
@@ -123,6 +137,8 @@ def malformed():
         report = run("check", "--domain", domain, bad_policy, exit_code=2)
         assert not report["valid"] and report["diagnostics"][0]["line"] == 1
         text("check", "--domain", domain, bad_policy, exit_code=2)
+        assert run("queries", "--domain", domain, bad_policy,
+                   exit_code=1)["code"] == "VALIDATION_FAILED"
 
         bad_domain = json.loads(domain.read_text())
         bad_domain["unknown"] = 1
@@ -131,6 +147,8 @@ def malformed():
         assert report["diagnostics"][0]["code"] == "DOMAIN_INVALID"
         assert run("solve", "--domain", path, "--facts",
                    FIXTURE / "rbac.facts.dl", policy, exit_code=1)["code"] == "VALIDATION_FAILED"
+        assert run("queries", "--domain", path, policy,
+                   exit_code=1)["code"] == "VALIDATION_FAILED"
         for name, content in (
             ("truncated.json", b'{"format":'),
             ("duplicate.json", b'{"format":"x","format":"y"}'),
@@ -173,6 +191,8 @@ def malformed():
             ("solve", ("--domain", domain, "--facts", missing, policy),
              "facts file not found"),
             ("check", ("--domain", domain, "--manifest", missing),
+             "manifest file not found"),
+            ("queries", ("--domain", domain, "--manifest", missing),
              "manifest file not found"),
         ):
             error = run(command, *args, exit_code=1)
@@ -271,9 +291,80 @@ def integers_and_manifest():
         report = run("check", "--domain", domain, "--domain", domain2,
                      "--manifest", manifest_path)
         assert report["valid"] and report["policyCount"] == 2
+        assert [p["policyId"] for p in report["policies"]] == ["policy0", "policy1"]
+        queries = run("queries", "--domain", domain, "--domain", domain2,
+                      "--manifest", manifest_path)
+        assert queries["policies"] == [
+            {"index": index, "policyId": f"policy{index}", "domain": name,
+             "queries": [{"predicate": "allow", "arity": 1}]}
+            for index, name in enumerate(("numbers_cli", "numbers_two_cli"))]
         assert run("check", "--domain", domain, "--domain", domain2,
                    "--manifest", manifest_path, "--policy-id", "x",
                    exit_code=1)["code"] == "VALIDATION_FAILED"
+
+        # A domain query flag does not bypass an absent or empty whitelist.
+        manifest["policies"][0]["queries"] = []
+        del manifest["policies"][1]["queries"]
+        manifest_path.write_text(json.dumps(manifest))
+        queries = run("queries", "--domain", domain, "--domain", domain2,
+                      "--manifest", manifest_path)
+        assert all(not p["queries"] for p in queries["policies"])
+        assert text("queries", "--domain", domain, "--domain", domain2,
+                    "--manifest", manifest_path).count("no authorized queries") == 2
+
+        # Disabled entries are omitted and enabled-policy indices stay compact.
+        manifest["policies"][0]["enabled"] = False
+        manifest_path.write_text(json.dumps(manifest))
+        checked = run("check", "--domain", domain, "--domain", domain2,
+                      "--manifest", manifest_path)
+        assert checked["policies"] == [
+            {"index": 0, "policyId": "policy1", "normalizedRuleCount": 1}]
+        assert run("queries", "--domain", domain, "--domain", domain2,
+                   "--manifest", manifest_path)["policies"][0]["policyId"] == "policy1"
+
+        # A successful empty policy handle is a valid result, not a schema error.
+        manifest["policies"][1]["enabled"] = False
+        manifest_path.write_text(json.dumps(manifest))
+        checked = run("check", "--domain", domain, "--domain", domain2,
+                      "--manifest", manifest_path)
+        assert checked["valid"] and checked["policyCount"] == 0
+        assert checked["policyFingerprint"] is None
+        assert checked["policies"] == [] and checked["normalizedRuleCount"] == 0
+        invalid_empty = dict(checked, policyFingerprint="0" * 64)
+        assert validate(invalid_empty, json.loads((ROOT / "cli/schemas/check.json").read_text()))
+        empty = run("queries", "--domain", domain, "--domain", domain2,
+                    "--manifest", manifest_path)
+        assert empty["policies"] == [] and empty["policyFingerprint"] is None
+        assert text("queries", "--domain", domain, "--domain", domain2,
+                    "--manifest", manifest_path) == "No enabled policies.\n"
+
+
+def manifest_query_whitelist():
+    with tempfile.TemporaryDirectory() as temp:
+        domain = FIXTURE / "rbac.domain.json"
+        source = (FIXTURE / "rbac.dl").read_text()
+        temporary_file(temp, "policy.dl", source)
+        manifest = {
+            "policy_set_id": "rbac", "policy_set_version": "1",
+            "manifest_version": "1", "default_profile": "enforce",
+            "created_for": "test", "strict_loading": True, "fail_closed": True,
+            "capabilities": [], "policies": [{
+                "policy_id": "restricted", "domain": "rbac_cli",
+                "file": "policy.dl", "sha256": hashlib.sha256(source.encode()).hexdigest(),
+                "mode": "enforce", "enabled": True, "description": "whitelist",
+                "queries": [{"name": "can_deliver", "arity": 1}],
+            }],
+        }
+        path = temporary_file(temp, "manifest.json", json.dumps(manifest))
+        result = run("queries", "--domain", domain, "--manifest", path)
+        assert result["policies"][0]["queries"] == [
+            {"predicate": "can_deliver", "arity": 1}]
+        invalid = dict(result, policyFingerprint=None)
+        assert validate(invalid, json.loads((ROOT / "cli/schemas/queries.json").read_text()))
+        assert text("queries", "--domain", domain, "--manifest", path) == (
+            'policy "restricted" (domain rbac_cli):\n  can_deliver/1\n')
+        assert run("queries", "--domain", domain, "--manifest", path,
+                   "--policy-id", "other", exit_code=1)["code"] == "VALIDATION_FAILED"
 
 
 if __name__ == "__main__":
@@ -282,4 +373,5 @@ if __name__ == "__main__":
     escaped_symbols()
     schema_arity()
     integers_and_manifest()
+    manifest_query_whitelist()
     print("cli behavior and schemas: PASS")

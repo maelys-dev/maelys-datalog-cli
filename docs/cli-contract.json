@@ -417,13 +417,43 @@
                   }
                 },
                 "then": {
+                  "else": {
+                    "properties": {
+                      "policies": {
+                        "minItems": 1
+                      },
+                      "policyFingerprint": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "if": {
+                    "properties": {
+                      "policyCount": {
+                        "const": 0
+                      }
+                    }
+                  },
                   "required": [
                     "policyFingerprint",
                     "policyCount",
                     "normalizedRuleCount",
                     "policies",
                     "domains"
-                  ]
+                  ],
+                  "then": {
+                    "properties": {
+                      "normalizedRuleCount": {
+                        "const": 0
+                      },
+                      "policies": {
+                        "maxItems": 0
+                      },
+                      "policyFingerprint": {
+                        "type": "null"
+                      }
+                    }
+                  }
                 }
               }
             ],
@@ -626,10 +656,15 @@
                     "normalizedRuleCount": {
                       "minimum": 0,
                       "type": "integer"
+                    },
+                    "policyId": {
+                      "minLength": 1,
+                      "type": "string"
                     }
                   },
                   "required": [
                     "index",
+                    "policyId",
                     "normalizedRuleCount"
                   ],
                   "type": "object"
@@ -637,12 +672,15 @@
                 "type": "array"
               },
               "policyCount": {
-                "minimum": 1,
+                "minimum": 0,
                 "type": "integer"
               },
               "policyFingerprint": {
                 "pattern": "^[0-9a-f]{64}$",
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "valid": {
                 "type": "boolean"
@@ -658,6 +696,198 @@
           ],
           "purpose": "Validate a domain and policy; exit 2 reports rejection.",
           "usage": "check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
+        },
+        {
+          "available": true,
+          "effect": "read",
+          "exitCodes": {
+            "0": "command completed",
+            "1": "execution failed",
+            "2": "valid report with violations"
+          },
+          "external": false,
+          "hidden": false,
+          "id": "queries",
+          "input": {
+            "constraints": [
+              {
+                "kind": "requires",
+                "options": [
+                  "--allow-test-only",
+                  "--manifest"
+                ]
+              },
+              {
+                "kind": "requires",
+                "options": [
+                  "--allow-undeclared-policy-atoms",
+                  "--manifest"
+                ]
+              }
+            ],
+            "operands": [
+              {
+                "name": "POLICY",
+                "required": false,
+                "summary": "Inline policy source file.",
+                "variadic": false
+              }
+            ],
+            "options": [
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--domain",
+                "repeatable": true,
+                "required": true,
+                "requires": [],
+                "summary": "Domain JSON declaration."
+              },
+              {
+                "argument": {
+                  "name": "FILE",
+                  "type": "path"
+                },
+                "conflictsWith": [],
+                "long": "--manifest",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Load a manifest as one policy set."
+              },
+              {
+                "argument": {
+                  "name": "ID",
+                  "type": "string"
+                },
+                "conflictsWith": [],
+                "long": "--policy-id",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Inline policy identifier."
+              },
+              {
+                "conflictsWith": [],
+                "long": "--allow-test-only",
+                "repeatable": false,
+                "required": false,
+                "requires": [
+                  "--manifest"
+                ],
+                "summary": "Admit test-only manifest entries."
+              },
+              {
+                "conflictsWith": [],
+                "long": "--allow-undeclared-policy-atoms",
+                "repeatable": false,
+                "required": false,
+                "requires": [
+                  "--manifest"
+                ],
+                "summary": "Admit policy-local atoms."
+              }
+            ],
+            "passthrough": false,
+            "synopsis": "queries [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
+          },
+          "outputMode": "json-envelope",
+          "outputSchema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "else": {
+              "properties": {
+                "policyFingerprint": {
+                  "type": "string"
+                }
+              }
+            },
+            "if": {
+              "properties": {
+                "policies": {
+                  "maxItems": 0
+                }
+              }
+            },
+            "properties": {
+              "policies": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "domain": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "index": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "policyId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "queries": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "arity": {
+                            "maximum": 4,
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "predicate": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "predicate",
+                          "arity"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "index",
+                    "policyId",
+                    "domain",
+                    "queries"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "policyFingerprint": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "policyFingerprint",
+              "policies"
+            ],
+            "then": {
+              "properties": {
+                "policyFingerprint": {
+                  "type": "null"
+                }
+              }
+            },
+            "type": "object"
+          },
+          "pattern": [
+            "queries"
+          ],
+          "purpose": "List each policy's effectively authorized queries.",
+          "usage": "queries [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
         },
         {
           "available": true,

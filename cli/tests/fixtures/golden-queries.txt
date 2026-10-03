@@ -1,0 +1,3 @@
+policy "cli" (domain rbac_cli):
+  allow/2
+  can_deliver/1

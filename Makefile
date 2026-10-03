@@ -73,7 +73,7 @@ $(ENGINE_LIB): dependencies/maelys-datalog.pin | check-engine-contract
 	$(CMAKE) -S "$(ENGINE_DIR)" -B "$(ENGINE_CMAKE_BUILD)" \
 		-DCMAKE_INSTALL_PREFIX="$(SDK_PREFIX)" \
 		-DCMAKE_C_FLAGS="$(SANITIZE_FLAGS)" \
-		-DMAELYS_DATALOG_PROFILE_LARGE=$(ENGINE_LARGE) -DMAELYS_DATALOG_CLI=OFF
+		-DMAELYS_DATALOG_PROFILE_LARGE=$(ENGINE_LARGE)
 	$(CMAKE) --build "$(ENGINE_CMAKE_BUILD)" --target maelys_datalog --parallel 4
 	$(CMAKE) --install "$(ENGINE_CMAKE_BUILD)" --component sdk-static
 	$(CMAKE) --install "$(ENGINE_CMAKE_BUILD)" --component sdk

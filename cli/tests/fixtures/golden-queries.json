@@ -1,0 +1,14 @@
+{
+  "policyFingerprint": "<fingerprint>",
+  "policies": [
+    {
+      "index": 0,
+      "policyId": "cli",
+      "domain": "rbac_cli",
+      "queries": [
+        {"predicate": "allow", "arity": 2},
+        {"predicate": "can_deliver", "arity": 1}
+      ]
+    }
+  ]
+}

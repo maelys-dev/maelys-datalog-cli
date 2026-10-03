@@ -5,6 +5,7 @@
   "policies": [
     {
       "index": 0,
+      "policyId": "cli",
       "normalizedRuleCount": 2
     }
   ],

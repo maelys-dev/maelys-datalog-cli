@@ -4,6 +4,28 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+## 0.2.0 — 2026-10-03
+
+### Added
+
+- Add `queries` to inspect the effectively authorized predicate/arity pairs of
+  each enabled policy, including multi-domain manifests and empty whitelists,
+  without solving facts. Text and JSON reports identify the policy and domain.
+- Include enabled policy identifiers in `check` JSON reports.
+
+### Changed
+
+- Pin the engine SDK to v0.20.0 and remove the obsolete engine CLI CMake option.
+  Read-only program inspection uses the installed public `datalog_program.h`;
+  provider and module headers remain forbidden.
+
+### Fixed
+
+- Accept successful manifests with no enabled policies in the `check` schema
+  and report zero policies and rules with a null fingerprint, since the SDK
+  does not fingerprint empty sets. The engine's empty policy handles are
+  released normally.
+
 ## 0.1.1 — 2026-10-01
 
 ### Fixed

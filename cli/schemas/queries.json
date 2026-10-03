@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["policyFingerprint", "policies"],
+  "properties": {
+    "policyFingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "policies": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["index", "policyId", "domain", "queries"],
+        "properties": {
+          "index": {"type": "integer", "minimum": 0},
+          "policyId": {"type": "string", "minLength": 1},
+          "domain": {"type": "string", "minLength": 1},
+          "queries": {
+            "type": "array", "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["predicate", "arity"],
+              "properties": {
+                "predicate": {"type": "string", "minLength": 1},
+                "arity": {"type": "integer", "minimum": 0, "maximum": 4}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "if": {"properties": {"policies": {"maxItems": 0}}},
+  "then": {"properties": {"policyFingerprint": {"type": "null"}}},
+  "else": {"properties": {"policyFingerprint": {"type": "string"}}}
+}
