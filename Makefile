@@ -61,7 +61,7 @@ check-cli-contract: check-dependencies
 
 check-json-contract: check-dependencies
 	$(call check_pin,$(JSON_DIR),maelys-json)
-	@grep -Fq '#define MAELYS_JSON_ABI_VERSION 2u' "$(JSON_DIR)/include/maelys/json.h"
+	@grep -Fq '#define MAELYS_JSON_ABI_VERSION 3u' "$(JSON_DIR)/include/maelys/json.h"
 	@cmp dependencies/maelys-json.pin "$(CLI_DIR)/dependencies/maelys-json.pin"
 
 check-spec-contract: check-dependencies
