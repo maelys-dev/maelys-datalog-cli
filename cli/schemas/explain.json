@@ -1,13 +1,576 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object", "additionalProperties": false,
-  "required": ["policyFingerprint", "executionFingerprint", "predicate", "present", "why", "document"],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyFingerprint",
+    "executionFingerprint",
+    "predicate",
+    "present",
+    "why",
+    "document",
+    "structure"
+  ],
   "properties": {
-    "policyFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "executionFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "predicate": {"type": "string"},
-    "present": {"type": "boolean"},
-    "why": {"enum": ["true", "false"]},
-    "document": {"type": "string", "pattern": "^MAELYS-DATALOG-v2\\n"}
+    "policyFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "executionFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "predicate": {
+      "type": "string"
+    },
+    "present": {
+      "type": "boolean"
+    },
+    "why": {
+      "enum": [
+        "true",
+        "false"
+      ]
+    },
+    "document": {
+      "type": "string",
+      "pattern": "^MAELYS-DATALOG-v2\\n"
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "found",
+        "truncated",
+        "status",
+        "query",
+        "steps",
+        "obstacles"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "why-true",
+            "why-false"
+          ]
+        },
+        "found": {
+          "type": "boolean"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "truncated",
+            "not-applicable",
+            "unknown",
+            "not-derived"
+          ]
+        },
+        "summary": {
+          "enum": [
+            "none",
+            "no-candidate-rule"
+          ]
+        },
+        "limits": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "candidate-rules",
+              "substitutions",
+              "depth",
+              "diagnostics",
+              "filter-cost"
+            ]
+          }
+        },
+        "query": {
+          "$ref": "#/$defs/fact"
+        },
+        "queryOrigin": {
+          "enum": [
+            "policy-fact",
+            "edb",
+            "idb",
+            "not-applicable",
+            "unknown"
+          ]
+        },
+        "candidateRuleCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "substitutionCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "filterCostUnits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limitHits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "obstacles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/obstacle"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "why-false"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "summary",
+              "limits",
+              "queryOrigin",
+              "candidateRuleCount",
+              "substitutionCount",
+              "filterCostUnits",
+              "limitHits"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "term": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "symbol"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "integer"
+            },
+            "value": {
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "boolean"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "irTerm": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "symbol"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "integer"
+            },
+            "value": {
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "boolean"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "variable"
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "predicate",
+        "terms"
+      ],
+      "properties": {
+        "predicate": {
+          "type": "string"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/term"
+          }
+        }
+      }
+    },
+    "atom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "predicate",
+        "terms"
+      ],
+      "properties": {
+        "predicate": {
+          "type": "string"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/irTerm"
+          }
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator",
+        "lhs",
+        "rhs"
+      ],
+      "properties": {
+        "operator": {
+          "enum": [
+            "equal",
+            "not-equal",
+            "less",
+            "less-or-equal",
+            "greater",
+            "greater-or-equal",
+            "unknown"
+          ]
+        },
+        "lhs": {
+          "$ref": "#/$defs/term"
+        },
+        "rhs": {
+          "$ref": "#/$defs/term"
+        }
+      }
+    },
+    "filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "programIndex",
+        "value"
+      ],
+      "properties": {
+        "programIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "$ref": "#/$defs/term"
+        }
+      }
+    },
+    "premise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "origin",
+        "bodyIndex",
+        "parentStep"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "positive-fact",
+            "negated-absence",
+            "comparison-true",
+            "filter-true",
+            "count",
+            "min",
+            "max",
+            "sum",
+            "unknown"
+          ]
+        },
+        "origin": {
+          "enum": [
+            "policy-fact",
+            "edb",
+            "idb",
+            "not-applicable",
+            "unknown"
+          ]
+        },
+        "bodyIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parentStep": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "atom": {
+          "$ref": "#/$defs/atom"
+        },
+        "comparison": {
+          "$ref": "#/$defs/comparison"
+        },
+        "filter": {
+          "$ref": "#/$defs/filter"
+        },
+        "projectedVariable": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "aggregateValue": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "ruleId",
+        "fact",
+        "premises"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ruleId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fact": {
+          "$ref": "#/$defs/fact"
+        },
+        "premises": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/premise"
+          }
+        }
+      }
+    },
+    "support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bodyIndex",
+        "origin",
+        "fact"
+      ],
+      "properties": {
+        "bodyIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "origin": {
+          "enum": [
+            "policy-fact",
+            "edb",
+            "idb",
+            "not-applicable",
+            "unknown"
+          ]
+        },
+        "fact": {
+          "$ref": "#/$defs/fact"
+        }
+      }
+    },
+    "obstacle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleId",
+        "depth",
+        "target",
+        "kind",
+        "origin",
+        "bodyIndex",
+        "unboundTermMask",
+        "bindings",
+        "supports"
+      ],
+      "properties": {
+        "ruleId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "target": {
+          "$ref": "#/$defs/fact"
+        },
+        "kind": {
+          "enum": [
+            "positive-no-match",
+            "negative-contradicted",
+            "comparison-false",
+            "recursive-no-base-support",
+            "filter-false",
+            "count-mismatch",
+            "min-mismatch",
+            "max-mismatch",
+            "sum-mismatch",
+            "min-empty",
+            "max-empty",
+            "unknown"
+          ]
+        },
+        "origin": {
+          "enum": [
+            "policy-fact",
+            "edb",
+            "idb",
+            "not-applicable",
+            "unknown"
+          ]
+        },
+        "bodyIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unboundTermMask": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern": {
+          "$ref": "#/$defs/atom"
+        },
+        "comparison": {
+          "$ref": "#/$defs/comparison"
+        },
+        "filter": {
+          "$ref": "#/$defs/filter"
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "variable",
+              "value"
+            ],
+            "properties": {
+              "variable": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "value": {
+                "$ref": "#/$defs/term"
+              }
+            }
+          }
+        },
+        "supports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/support"
+          }
+        }
+      }
+    }
   }
 }
