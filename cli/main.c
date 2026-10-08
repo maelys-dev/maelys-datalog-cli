@@ -584,7 +584,7 @@ static void human_symbol(human_text_t *out, const char *value, size_t length) {
     human_append(out, "\"");
 }
 
-static int command_queries(maelys_cli_context_t *context) {
+static int inspection_common(maelys_cli_context_t *context, int details) {
     state_t state = {0};
     datalog_cli_error_t error = {0};
     if (load_policy(context, &state, &error) != 0) { cleanup(&state); return 1; }
@@ -623,13 +623,51 @@ static int command_queries(maelys_cli_context_t *context) {
         (void)maelys_cli_json_key_unsigned(&json, "index", (uint64_t)i);
         (void)maelys_cli_json_key_string(&json, "policyId", info.policy_id);
         (void)maelys_cli_json_key_string(&json, "domain", info.domain);
-        (void)maelys_cli_json_key(&json, "queries");
-        (void)maelys_cli_json_begin_array(&json);
         human_append(&human, "policy ");
         human_symbol(&human, info.policy_id, strlen(info.policy_id));
         human_append(&human, " (domain ");
         human_append(&human, info.domain);
         human_append(&human, "):\n");
+        if (details) {
+            maelys_datalog_session_resources_t resources = MAELYS_DATALOG_RESOURCES_INIT;
+            rc = maelys_datalog_session_get_resources(state.session, &resources);
+            if (rc != MAELYS_DATALOG_STATUS_OK) goto failed;
+            (void)maelys_cli_json_key_string(&json, "programFingerprint", info.fingerprint);
+            (void)maelys_cli_json_key_unsigned(&json, "requiredCapabilities", info.required_capabilities);
+            (void)maelys_cli_json_key(&json, "counts");
+            (void)maelys_cli_json_begin_object(&json);
+            (void)maelys_cli_json_key_unsigned(&json, "predicates", info.predicate_count);
+            (void)maelys_cli_json_key_unsigned(&json, "facts", info.fact_count);
+            (void)maelys_cli_json_key_unsigned(&json, "rules", info.rule_count);
+            (void)maelys_cli_json_end_object(&json);
+            (void)maelys_cli_json_key(&json, "programLimits");
+            (void)maelys_cli_json_begin_object(&json);
+            (void)maelys_cli_json_key_unsigned(&json, "inputFacts", info.max_input_facts);
+            (void)maelys_cli_json_key_unsigned(&json, "derivedFacts", info.max_derived_facts);
+            (void)maelys_cli_json_key_unsigned(&json, "factsPerPredicate", info.max_facts_per_predicate);
+            (void)maelys_cli_json_end_object(&json);
+            (void)maelys_cli_json_key(&json, "inspectionCapacity");
+            (void)maelys_cli_json_begin_object(&json);
+            (void)maelys_cli_json_key_unsigned(&json, "inputFacts", resources.input_facts);
+            (void)maelys_cli_json_key_unsigned(&json, "derivedFacts", resources.derived_facts);
+            (void)maelys_cli_json_key_unsigned(&json, "symbols", resources.symbols);
+            (void)maelys_cli_json_key_unsigned(&json, "textBytes", resources.text_bytes);
+            (void)maelys_cli_json_end_object(&json);
+            char summary[256];
+            int length = snprintf(summary, sizeof(summary),
+                "  %zu predicates, %zu policy facts, %zu rules\n"
+                "  program limits: input=%zu, derived=%zu, per predicate=%zu\n"
+                "  inspection capacity: input=%zu, derived=%zu, symbols=%zu, text bytes=%zu\n",
+                info.predicate_count, info.fact_count, info.rule_count,
+                info.max_input_facts, info.max_derived_facts, info.max_facts_per_predicate,
+                resources.input_facts, resources.derived_facts, resources.symbols, resources.text_bytes);
+            if (length < 0 || (size_t)length >= sizeof(summary)) {
+                rc = MAELYS_DATALOG_STATUS_INTERNAL; goto failed;
+            }
+            human_appendn(&human, summary, (size_t)length);
+        }
+        (void)maelys_cli_json_key(&json, "queries");
+        (void)maelys_cli_json_begin_array(&json);
         for (size_t j = 0; j < count; ++j) {
             maelys_datalog_predicate_t predicate = {0};
             rc = maelys_datalog_program_query(program, j, &predicate);
@@ -667,6 +705,14 @@ static int command_queries(maelys_cli_context_t *context) {
 failed:
     free(human.data); maelys_cli_json_writer_clear(&json);
     cleanup(&state); return status_failure(context, rc, NULL);
+}
+
+static int command_queries(maelys_cli_context_t *context) {
+    return inspection_common(context, 0);
+}
+
+static int command_inspect(maelys_cli_context_t *context) {
+    return inspection_common(context, 1);
 }
 
 static int command_solve(maelys_cli_context_t *context) {
@@ -915,6 +961,11 @@ static const maelys_cli_example_t check_examples[] = {
     {MAELYS_CLI_EXAMPLE("check --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
                         "Validate the RBAC policy and its domain.")},
 };
+static const maelys_cli_example_t inspect_examples[] = {
+    {MAELYS_CLI_EXAMPLE("inspect --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
+                        "Inspect the RBAC compiled policy and its authorized queries.")},
+};
+
 static const maelys_cli_example_t queries_examples[] = {
     {MAELYS_CLI_EXAMPLE("queries --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
                         "List the RBAC policy authorized queries.")},
@@ -936,6 +987,9 @@ static const maelys_cli_command_t commands[] = {
     {MAELYS_CLI_READ("check", "check", "Validate a domain and policy; exit 2 reports rejection.",
                      command_check), MAELYS_CLI_OPERANDS(policy_operand),
      MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_check_schema), MAELYS_CLI_EXAMPLES(check_examples)},
+    {MAELYS_CLI_READ("inspect", "inspect", "Inspect compiled policy counts, limits and authorized queries.",
+                     command_inspect), MAELYS_CLI_OPERANDS(policy_operand),
+     MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_inspect_schema), MAELYS_CLI_EXAMPLES(inspect_examples)},
     {MAELYS_CLI_READ("queries", "queries", "List each policy's effectively authorized queries.",
                      command_queries), MAELYS_CLI_OPERANDS(policy_operand),
      MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_queries_schema), MAELYS_CLI_EXAMPLES(queries_examples)},
