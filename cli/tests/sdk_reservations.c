@@ -99,5 +99,9 @@ int main(void) {
  0,
 #endif
  attempts);
- for(size_t i=0;i<4;++i) OK(maelys_datalog_session_free(sessions[i]));OK(maelys_datalog_session_free(inspection));OK(maelys_datalog_policy_free(p));
+ for(size_t i=0;i<4;++i) {
+  OK(maelys_datalog_session_free(sessions[i]));
+ }
+ OK(maelys_datalog_session_free(inspection));
+ OK(maelys_datalog_policy_free(p));
 }
