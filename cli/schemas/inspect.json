@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyFingerprint",
+    "policies"
+  ],
+  "properties": {
+    "policyFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "policies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "policyId",
+          "domain",
+          "queries",
+          "programFingerprint",
+          "requiredCapabilities",
+          "counts",
+          "programLimits",
+          "inspectionCapacity"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "policyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "predicate",
+                "arity"
+              ],
+              "properties": {
+                "predicate": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "arity": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            }
+          },
+          "programFingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "requiredCapabilities": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "predicates",
+              "facts",
+              "rules"
+            ],
+            "properties": {
+              "predicates": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "facts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "rules": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "programLimits": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "inputFacts",
+              "derivedFacts",
+              "factsPerPredicate"
+            ],
+            "properties": {
+              "inputFacts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "derivedFacts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "factsPerPredicate": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "inspectionCapacity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "inputFacts",
+              "derivedFacts",
+              "symbols",
+              "textBytes"
+            ],
+            "properties": {
+              "inputFacts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "derivedFacts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "symbols": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "textBytes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

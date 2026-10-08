@@ -49,12 +49,39 @@ def text(command, *arguments, exit_code=0):
     return process.stderr if exit_code == 1 else process.stdout
 
 
+def inspection():
+    domain = str(FIXTURE / "rbac.domain.json")
+    policy = str(FIXTURE / "rbac.dl")
+    result = run("inspect", "--domain", domain, policy)
+    assert not validate(result, json.loads((ROOT / "cli/schemas/inspect.json").read_text()))
+    queries = run("queries", "--domain", domain, policy)
+    assert result["policyFingerprint"] == queries["policyFingerprint"]
+    for record, expected in zip(result["policies"], queries["policies"]):
+        assert record["queries"] == expected["queries"]
+        assert record["counts"]["predicates"] > 0 and record["counts"]["rules"] > 0
+        assert record["programLimits"]["inputFacts"] > 0
+        assert record["programLimits"]["derivedFacts"] > 0
+        assert record["inspectionCapacity"]["inputFacts"] == 0
+        assert record["inspectionCapacity"]["derivedFacts"] == 0
+        assert record["inspectionCapacity"]["symbols"] > 0
+    assert "program limits" in text("inspect", "--domain", domain, policy)
+    with tempfile.TemporaryDirectory() as temporary:
+        manifest = pathlib.Path(temporary) / "empty.json"
+        manifest.write_text(json.dumps({"policy_set_id": "empty", "policy_set_version": "1",
+            "manifest_version": "1", "default_profile": "enforce", "created_for": "test",
+            "strict_loading": True, "fail_closed": True, "capabilities": [], "policies": []}))
+        empty = run("inspect", "--domain", domain, "--manifest", manifest)
+        assert empty["policies"] == []
+        assert not validate(empty, json.loads((ROOT / "cli/schemas/inspect.json").read_text()))
+
+
+
 def help_catalog():
     catalog = json.loads(subprocess.check_output(
         [str(BINARY), "describe", "--format", "json"], text=True))["data"]
     overview = text("help")
     for command in catalog["commands"]:
-        if command["id"] not in {"check", "queries", "fingerprint", "solve", "explain"}:
+        if command["id"] not in {"check", "queries", "inspect", "fingerprint", "solve", "explain"}:
             continue
         # Match content, not alignment, wrapping, capitalization or line count.
         assert " ".join(command["pattern"]) in overview
@@ -498,6 +525,7 @@ def structured_cases():
 
 if __name__ == "__main__":
     basic()
+    inspection()
     structured_explanations()
     structured_cases()
     malformed()
