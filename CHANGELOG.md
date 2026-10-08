@@ -6,6 +6,12 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ### Changed
 
+- Reserve only the requested Why-true or Why-false workspace for `explain`.
+  Prepare `queries` sessions with zero input/derived fact capacities while
+  retaining the compiled program's limits and authorized query surface.
+- Add installed-SDK reservation, explanation lease/retry and allocator-disabled
+  replay checks in SMALL and LARGE. Reservation sizes are not RSS or timings.
+
 - Adopt the published v0.22.0 compatibility-freeze SDK. Preserve the explicit
   unsupported nonzero work-limit diagnostic for the reference backend.
 - Replay caller-owned policy liveness and session lifetime against installed
