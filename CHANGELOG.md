@@ -4,6 +4,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Build the Homebrew CLI against the installed static `libmaelys-datalog` SDK,
+  with explicit installed-version and profile checks.
+
 - Add `inspect` with compiled policy counts, program limits, authorized queries
   and separately named inspection session capacities.
 
