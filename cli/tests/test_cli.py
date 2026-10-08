@@ -49,6 +49,25 @@ def text(command, *arguments, exit_code=0):
     return process.stderr if exit_code == 1 else process.stdout
 
 
+def help_catalog():
+    catalog = json.loads(subprocess.check_output(
+        [str(BINARY), "describe", "--format", "json"], text=True))["data"]
+    overview = text("help")
+    for command in catalog["commands"]:
+        if command["id"] not in {"check", "queries", "fingerprint", "solve", "explain"}:
+            continue
+        # Match content, not alignment, wrapping, capitalization or line count.
+        assert " ".join(command["pattern"]) in overview
+        assert " ".join(command["purpose"].split()) in " ".join(overview.split())
+        page = text("help", command["id"])
+        assert " ".join(command["pattern"]) in page
+        assert " ".join(command["purpose"].split()) in " ".join(page.split())
+        assert " ".join(command["usage"].split()) in " ".join(page.split())
+        assert command["examples"]
+        for example in command["examples"]:
+            assert " ".join(example["words"]) in " ".join(page.split())
+
+
 def temporary_file(directory, name, content):
     path = pathlib.Path(directory) / name
     path.write_bytes(content if isinstance(content, bytes) else content.encode())
@@ -395,4 +414,5 @@ if __name__ == "__main__":
     schema_arity()
     integers_and_manifest()
     manifest_query_whitelist()
+    help_catalog()
     print("cli behavior and schemas: PASS")
