@@ -62,3 +62,8 @@ The binary is `build/bin/maelys-datalog`. The build installs the pinned SDK
 into its private build tree and compiles the command only against its public
 installed headers and archive. The CLI and its JSON reader allocate memory;
 the engine's allocation guarantees do not apply to those application layers.
+
+`inspect` reports each enabled compiled policy’s counts, authorized queries and
+program limits. `inspectionCapacity` describes the temporary inspection session
+(input and derived capacities are zero), not the limits of a solving session.
+These counts and capacities do not measure RSS or execution speed.

@@ -4,6 +4,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Add `inspect` with compiled policy counts, program limits, authorized queries
+  and separately named inspection session capacities.
+
 ### Added
 
 - Add typed `structure` to JSON explanations: proof steps and premises,

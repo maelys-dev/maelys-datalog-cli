@@ -14,6 +14,7 @@ Common contract: `agent-cli/v2`. For the machine-readable detail run
 | completion | `completion SHELL` | read | json-envelope | Print the shell completion script generated from the catalog. |
 | complete.candidates | `__complete [WORDS...]` | read | json-records | Return completion candidates for a partial command line. |
 | check | `check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | Validate a domain and policy; exit 2 reports rejection. |
+| inspect | `inspect [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | Inspect compiled policy counts, limits and authorized queries. |
 | queries | `queries [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | List each policy's effectively authorized queries. |
 | fingerprint | `fingerprint [POLICY] --domain FILE [--policy-id ID] [--work-limit N]` | read | json-envelope | Read policy and execution identities. |
 | solve | `solve [POLICY] --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]` | read | json-envelope | Solve an inline policy against one EDB batch. |
