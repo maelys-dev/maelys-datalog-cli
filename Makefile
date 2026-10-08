@@ -22,7 +22,7 @@ JSON_LIB = $(abspath $(BUILD_DIR))/deps/maelys-json/lib/libmaelys-json.a
 BIN = $(BUILD_DIR)/bin/maelys-datalog
 SCHEMAS = $(wildcard cli/schemas/*.json)
 SCHEMA_SYMBOLS = $(foreach schema,$(SCHEMAS),datalog_$(basename $(notdir $(schema)))_schema=$(schema))
-SOURCES = cli/main.c cli/domain.c cli/facts.c
+SOURCES = cli/main.c cli/domain.c cli/facts.c cli/explanation.c
 OBJECTS = $(SOURCES:cli/%.c=$(BUILD_DIR)/obj/%.o)
 PROFILE_CFLAGS = $(if $(filter LARGE,$(PROFILE)),-DMAELYS_DATALOG_PROFILE_LARGE,)
 ENGINE_LARGE = $(if $(filter LARGE,$(PROFILE)),ON,OFF)
@@ -94,7 +94,7 @@ $(BUILD_DIR)/generated/datalog_schemas.h: $(SCHEMAS) | $(CLI_LIB)
 	@mkdir -p $(dir $@)
 	$(CLI_DIR)/tools/maelys-cli-embed --header $(SCHEMA_SYMBOLS) > $@
 
-$(BUILD_DIR)/obj/%.o: cli/%.c cli/reader.h $(BUILD_DIR)/generated/datalog_schemas.h | $(ENGINE_LIB) $(CLI_LIB) $(JSON_LIB)
+$(BUILD_DIR)/obj/%.o: cli/%.c cli/reader.h cli/explanation.h $(BUILD_DIR)/generated/datalog_schemas.h | $(ENGINE_LIB) $(CLI_LIB) $(JSON_LIB)
 	@mkdir -p $(dir $@)
 	$(CC) $(CLI_CFLAGS) -c $< -o $@
 
@@ -161,6 +161,7 @@ install: $(BIN)
 	install -d "$(DESTDIR)$(PREFIX)/share/doc/maelys-datalog"
 	install -m 644 LICENSE CHANGELOG.md docs/cli.md docs/cli-contract.json \
 		docs/specifications/maelys-datalog-domain-v1.md \
+		docs/specifications/maelys-datalog-explanation-v1.md \
 		"$(DESTDIR)$(PREFIX)/share/doc/maelys-datalog/"
 
 clean:
