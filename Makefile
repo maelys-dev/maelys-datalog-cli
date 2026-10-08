@@ -14,7 +14,8 @@ ENGINE_DIR = $(DEPS)/maelys-datalog
 CLI_DIR = $(DEPS)/maelys-cli
 JSON_DIR = $(DEPS)/maelys-json
 SPEC_DIR = $(DEPS)/agent-cli-spec
-SDK_PREFIX = $(abspath $(BUILD_DIR))/sdk
+INSTALLED_SDK_PREFIX ?=
+SDK_PREFIX = $(if $(strip $(INSTALLED_SDK_PREFIX)),$(abspath $(INSTALLED_SDK_PREFIX)),$(abspath $(BUILD_DIR))/sdk)
 ENGINE_CMAKE_BUILD = $(abspath $(BUILD_DIR))/engine-cmake
 ENGINE_LIB = $(SDK_PREFIX)/lib/libmaelys_datalog.a
 CLI_LIB = $(abspath $(BUILD_DIR))/deps/maelys-cli/lib/libmaelys_cli.a
@@ -34,7 +35,7 @@ CLI_CFLAGS = -std=c11 -Wall -Wextra -Werror -g $(SANITIZE_FLAGS) \
 .PHONY: all check check-dependencies check-engine-contract check-cli-contract \
     check-json-contract check-spec-contract cli-test conformance-check \
     installed-sdk-check asan-cli install clean
-all: $(BIN)
+all: check-engine-contract $(BIN)
 
 check-dependencies:
 	@test -n "$(MAELYS_DEPENDENCIES_DIR)" || { \
@@ -48,11 +49,21 @@ define check_pin
 	@test -z "$$(git -C "$(1)" ls-files --others --exclude-standard)"
 endef
 
+ifeq ($(strip $(INSTALLED_SDK_PREFIX)),)
 check-engine-contract: check-dependencies
 	$(call check_pin,$(ENGINE_DIR),maelys-datalog)
 	@test "$$(cat "$(ENGINE_DIR)/VERSION")" = \
 		"$$(sed -n '1s/^v//p' dependencies/maelys-datalog.pin)"
 	@test -f "$(ENGINE_DIR)/include/maelys/datalog.h"
+
+else
+check-engine-contract: check-dependencies
+	@python3 scripts/check-installed-sdk.py "$(SDK_PREFIX)" dependencies/maelys-datalog.pin
+	@mkdir -p "$(BUILD_DIR)/bin"
+	$(CC) -std=c11 -Wall -Wextra -Werror $(PROFILE_CFLAGS) $(SANITIZE_FLAGS) \
+		-I$(SDK_PREFIX)/include cli/tests/sdk_profile.c $(ENGINE_LIB) -o $(BUILD_DIR)/bin/sdk-profile
+	$(BUILD_DIR)/bin/sdk-profile
+endif
 
 check-cli-contract: check-dependencies
 	$(call check_pin,$(CLI_DIR),maelys-cli)
@@ -68,6 +79,7 @@ check-spec-contract: check-dependencies
 	$(call check_pin,$(SPEC_DIR),agent-cli-spec)
 	@cmp dependencies/agent-cli-spec.pin "$(CLI_DIR)/dependencies/agent-cli-spec.pin"
 
+ifeq ($(strip $(INSTALLED_SDK_PREFIX)),)
 $(ENGINE_LIB): dependencies/maelys-datalog.pin | check-engine-contract
 	@mkdir -p $(BUILD_DIR)
 	$(CMAKE) -S "$(ENGINE_DIR)" -B "$(ENGINE_CMAKE_BUILD)" \
@@ -77,6 +89,11 @@ $(ENGINE_LIB): dependencies/maelys-datalog.pin | check-engine-contract
 	$(CMAKE) --build "$(ENGINE_CMAKE_BUILD)" --target maelys_datalog --parallel 4
 	$(CMAKE) --install "$(ENGINE_CMAKE_BUILD)" --component sdk-static
 	$(CMAKE) --install "$(ENGINE_CMAKE_BUILD)" --component sdk
+
+else
+$(ENGINE_LIB): | check-engine-contract
+	@echo "Installed SDK archive is missing: $@" >&2; exit 1
+endif
 
 $(CLI_LIB): dependencies/maelys-cli.pin | check-cli-contract
 	$(MAKE) -C "$(CLI_DIR)" CPPFLAGS= BUILD=$(abspath $(BUILD_DIR))/deps/maelys-cli \
@@ -140,7 +157,14 @@ sdk-allocation-check: check-engine-contract
 		-o $(BUILD_DIR)/bin/sdk-reservations-guarded
 	$(BUILD_DIR)/bin/sdk-reservations-guarded
 
-installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime $(BUILD_DIR)/bin/sdk-reservations
+$(BUILD_DIR)/bin/sdk-profile: cli/tests/sdk_profile.c | $(ENGINE_LIB)
+	@mkdir -p $(dir $@)
+	$(CC) -std=c11 -Wall -Wextra -Werror $(PROFILE_CFLAGS) $(SANITIZE_FLAGS) \
+		-I$(SDK_PREFIX)/include $< $(ENGINE_LIB) -o $@
+
+installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime $(BUILD_DIR)/bin/sdk-reservations $(BUILD_DIR)/bin/sdk-profile
+	python3 scripts/check-installed-sdk.py "$(SDK_PREFIX)" dependencies/maelys-datalog.pin
+	$(BUILD_DIR)/bin/sdk-profile
 	$(BUILD_DIR)/bin/sdk-policy-lifetime
 	$(BUILD_DIR)/bin/sdk-reservations
 	@test -f "$(SDK_PREFIX)/include/maelys/datalog.h"
@@ -155,7 +179,7 @@ asan-cli:
 	$(MAKE) BUILD_DIR=build/asan-$(PROFILE) PROFILE=$(PROFILE) \
 		SANITIZE_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer -O1' cli-test
 
-install: $(BIN)
+install: check-engine-contract $(BIN)
 	install -d "$(DESTDIR)$(PREFIX)/bin"
 	install -m 755 "$(BIN)" "$(DESTDIR)$(PREFIX)/bin/maelys-datalog"
 	install -d "$(DESTDIR)$(PREFIX)/share/doc/maelys-datalog"
