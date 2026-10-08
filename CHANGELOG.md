@@ -4,7 +4,17 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Add typed `structure` to JSON explanations: proof steps and premises,
+  Why-false obstacles, bindings, supports and exploration limits. Preserve the
+  existing document and text output from the same prepared explanation lease.
+
 ### Changed
+
+- Reserve one caller arena for the selected explanation kind before solving,
+  instead of a session workspace plus a second prepared arena. Release the
+  explanation before its result and retain typed values during serialization.
 
 - Reserve only the requested Why-true or Why-false workspace for `explain`.
   Prepare `queries` sessions with zero input/derived fact capacities while

@@ -7,7 +7,8 @@ dependency at the v0.22.0 compatibility freeze; this repository does not contain
 
 The command follows [agent-cli/v2](docs/cli.md). Run
 `maelys-datalog describe --summary --format json` for its machine-readable
-catalog. The [domain declaration](docs/specifications/maelys-datalog-domain-v1.md)
+catalog. JSON explanations also include a [typed structure](docs/specifications/maelys-datalog-explanation-v1.md)
+while preserving their text document. The [domain declaration](docs/specifications/maelys-datalog-domain-v1.md)
 is a strict JSON file parsed with `maelys-json`.
 
 ```sh

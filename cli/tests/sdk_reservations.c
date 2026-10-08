@@ -83,6 +83,24 @@ int main(void) {
    assert(text(r,kinds[i]==MAELYS_DATALOG_EXPLAIN_TRUE?MAELYS_DATALOG_EXPLAIN_FALSE:MAELYS_DATALOG_EXPLAIN_TRUE,&v,NULL,0,&untouched)==MAELYS_DATALOG_STATUS_UNSUPPORTED && untouched==123);
    maelys_datalog_prepared_explanation_t *prepared=NULL;
    OK(maelys_datalog_result_prepare_explanation(r,(maelys_datalog_explanation_kind_t)kinds[i],"seen",&v,1,arena,arena_bytes,&prepared));
+   maelys_datalog_explanation_info_t info={0};
+   OK(maelys_datalog_prepared_explanation_info(prepared,&info));
+   assert(info.kind==(maelys_datalog_explanation_kind_t)kinds[i]);
+   char prepared_text[4096];
+   OK(maelys_datalog_prepared_explanation_write_text(prepared,prepared_text,sizeof prepared_text));
+   assert(!strcmp(buffer,prepared_text));
+   for(size_t n=0;n<info.step_count;++n) {
+    maelys_datalog_explanation_step_view_t step;
+    OK(maelys_datalog_prepared_explanation_step(prepared,n,&step));
+   }
+   for(size_t n=0;n<info.premise_count;++n) {
+    maelys_datalog_explanation_premise_view_t premise;
+    OK(maelys_datalog_prepared_explanation_premise(prepared,n,&premise));
+   }
+   for(size_t n=0;n<info.diagnostic_count;++n) {
+    maelys_datalog_explanation_obstacle_view_t obstacle;
+    OK(maelys_datalog_prepared_explanation_obstacle(prepared,n,&obstacle));
+   }
    assert(maelys_datalog_result_free(r)==MAELYS_DATALOG_STATUS_INVALID_STATE);
    OK(maelys_datalog_prepared_explanation_release(prepared));
    OK(maelys_datalog_result_free(r));forbidden=0;
