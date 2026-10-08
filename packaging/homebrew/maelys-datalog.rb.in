@@ -9,13 +9,9 @@ class MaelysDatalog < Formula
   sha256 "@SHA256@"
   license "MPL-2.0"
 
-  depends_on "cmake" => :build
   depends_on "git" => :build
-
-  resource "maelys-datalog" do
-    url "https://github.com/maelys-dev/maelys-datalog.git",
-        tag: "@ENGINE_TAG@", revision: "@ENGINE_PIN@"
-  end
+  depends_on "python@3.14" => :build
+  depends_on "maelys-dev/tap/libmaelys-datalog" => :build
 
   resource "maelys-cli" do
     url "https://github.com/maelys-dev/maelys-cli.git",
@@ -30,11 +26,11 @@ class MaelysDatalog < Formula
   def install
     ENV.deparallelize
     dependencies = buildpath/"vendor"
-    resource("maelys-datalog").stage dependencies/"maelys-datalog"
     resource("maelys-cli").stage dependencies/"maelys-cli"
     resource("maelys-json").stage dependencies/"maelys-json"
     system "make", "install", "PREFIX=#{prefix}",
-           "MAELYS_DEPENDENCIES_DIR=#{dependencies}"
+           "MAELYS_DEPENDENCIES_DIR=#{dependencies}",
+           "INSTALLED_SDK_PREFIX=#{Formula["libmaelys-datalog"].opt_prefix}"
   end
 
   test do

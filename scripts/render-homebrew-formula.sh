@@ -20,8 +20,6 @@ tar -xzf "$work/source.tar.gz" -C "$work/tag" --strip-components=1
 test "$(cat "$work/tag/VERSION")" = "$version" || {
     echo "tag $tag does not carry VERSION $version" >&2; exit 1;
 }
-engine_tag=$(sed -n '1p' "$work/tag/dependencies/maelys-datalog.pin")
-engine_pin=$(sed -n '2p' "$work/tag/dependencies/maelys-datalog.pin")
 cli_tag=$(sed -n '1p' "$work/tag/dependencies/maelys-cli.pin")
 cli_pin=$(sed -n '2p' "$work/tag/dependencies/maelys-cli.pin")
 json_tag=$(sed -n '1p' "$work/tag/dependencies/maelys-json.pin")
@@ -29,7 +27,6 @@ json_pin=$(sed -n '2p' "$work/tag/dependencies/maelys-json.pin")
 mkdir -p "$(dirname "$output")"
 sed -e "s|@URL@|$url|g" -e "s|@VERSION@|$version|g" \
     -e "s|@SHA256@|$digest|g" \
-    -e "s|@ENGINE_TAG@|$engine_tag|g" -e "s|@ENGINE_PIN@|$engine_pin|g" \
     -e "s|@CLI_TAG@|$cli_tag|g" -e "s|@CLI_PIN@|$cli_pin|g" \
     -e "s|@JSON_TAG@|$json_tag|g" -e "s|@JSON_PIN@|$json_pin|g" \
     "$work/tag/packaging/homebrew/maelys-datalog.rb.in" > "$output"
