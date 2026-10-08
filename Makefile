@@ -119,8 +119,30 @@ $(BUILD_DIR)/bin/sdk-policy-lifetime: cli/tests/sdk_policy_lifetime.c | $(ENGINE
 	$(CC) -std=c11 -D_POSIX_C_SOURCE=200112L -Wall -Wextra -Werror \
 		$(PROFILE_CFLAGS) $(SANITIZE_FLAGS) -I$(SDK_PREFIX)/include $< $(ENGINE_LIB) -o $@
 
-installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime
+$(BUILD_DIR)/bin/sdk-reservations: cli/tests/sdk_reservations.c cli/tests/sdk_allocation_guard.h | $(ENGINE_LIB)
+	@mkdir -p $(dir $@)
+	$(CC) -std=c11 -Wall -Wextra -Werror $(PROFILE_CFLAGS) $(SANITIZE_FLAGS) \
+		-I$(SDK_PREFIX)/include $< $(ENGINE_LIB) -o $@
+
+.PHONY: sdk-allocation-check
+sdk-allocation-check: check-engine-contract
+	$(CMAKE) -S "$(ENGINE_DIR)" -B "$(abspath $(BUILD_DIR))/guard-engine" \
+		-DBUILD_TESTING=OFF -DMAELYS_DATALOG_PROFILE_LARGE=$(ENGINE_LARGE) \
+		-DCMAKE_INSTALL_PREFIX="$(abspath $(BUILD_DIR))/guard-sdk" \
+		-DCMAKE_C_FLAGS="-include $(abspath cli/tests/sdk_allocation_guard.h) $(SANITIZE_FLAGS)"
+	$(CMAKE) --build "$(abspath $(BUILD_DIR))/guard-engine" --target maelys_datalog --parallel 4
+	$(CMAKE) --install "$(abspath $(BUILD_DIR))/guard-engine" --component sdk-static
+	$(CMAKE) --install "$(abspath $(BUILD_DIR))/guard-engine" --component sdk
+	@mkdir -p $(BUILD_DIR)/bin
+	$(CC) -std=c11 -Wall -Wextra -Werror $(PROFILE_CFLAGS) $(SANITIZE_FLAGS) \
+		-DCLI_SDK_ALLOC_GUARDED -I$(abspath $(BUILD_DIR))/guard-sdk/include \
+		cli/tests/sdk_reservations.c $(abspath $(BUILD_DIR))/guard-sdk/lib/libmaelys_datalog.a \
+		-o $(BUILD_DIR)/bin/sdk-reservations-guarded
+	$(BUILD_DIR)/bin/sdk-reservations-guarded
+
+installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime $(BUILD_DIR)/bin/sdk-reservations
 	$(BUILD_DIR)/bin/sdk-policy-lifetime
+	$(BUILD_DIR)/bin/sdk-reservations
 	@test -f "$(SDK_PREFIX)/include/maelys/datalog.h"
 	@test -f "$(SDK_PREFIX)/lib/libmaelys_datalog.a"
 	@$(BIN) check --domain cli/tests/fixtures/rbac.domain.json \
