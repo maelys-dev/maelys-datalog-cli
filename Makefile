@@ -114,7 +114,13 @@ cli-test: $(BIN) check-spec-contract
 conformance-check: $(BIN) check-spec-contract
 	python3 "$(SPEC_DIR)/conformance/run.py" $(abspath $(BIN))
 
-installed-sdk-check: $(BIN)
+$(BUILD_DIR)/bin/sdk-policy-lifetime: cli/tests/sdk_policy_lifetime.c | $(ENGINE_LIB)
+	@mkdir -p $(dir $@)
+	$(CC) -std=c11 -D_POSIX_C_SOURCE=200112L -Wall -Wextra -Werror \
+		$(PROFILE_CFLAGS) $(SANITIZE_FLAGS) -I$(SDK_PREFIX)/include $< $(ENGINE_LIB) -o $@
+
+installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime
+	$(BUILD_DIR)/bin/sdk-policy-lifetime
 	@test -f "$(SDK_PREFIX)/include/maelys/datalog.h"
 	@test -f "$(SDK_PREFIX)/lib/libmaelys_datalog.a"
 	@$(BIN) check --domain cli/tests/fixtures/rbac.domain.json \

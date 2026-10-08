@@ -3,7 +3,7 @@
 `maelys-datalog` is a command-line consumer of the public Maelys Datalog SDK.
 It validates policies and domains, reports fingerprints, solves a batch of
 facts, and renders Why-true or Why-false explanations. The engine is a pinned
-dependency at v0.21.0; this repository does not contain or modify its sources.
+dependency at the v0.22.0 compatibility freeze; this repository does not contain or modify its sources.
 
 The command follows [agent-cli/v2](docs/cli.md). Run
 `maelys-datalog describe --summary --format json` for its machine-readable
