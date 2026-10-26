@@ -1,0 +1,52 @@
+name: probe direct maelys-datalog CLI install without tap trust
+on:
+  push:
+    branches: [test/cli-homebrew-no-trust]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Verify a clean public macOS runner and update Homebrew
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          if brew list --formula -1 | grep -Eq '^(maelys-datalog|libmaelys-datalog)$'; then
+            echo 'Maelys CLI or SDK is already installed' >&2
+            exit 1
+          fi
+          if brew tap | grep -qx maelys-dev/tap; then
+            echo 'Maelys tap is already present' >&2
+            exit 1
+          fi
+          brew update
+          brew --version | tee "$RUNNER_TEMP/cli-homebrew-probe-version.txt"
+          brew config > "$RUNNER_TEMP/cli-homebrew-probe-config.txt"
+          echo 'Fresh hosted macOS runner: no Maelys package or tap; Homebrew updated'
+      - name: Run the exact CLI installation command without trust
+        shell: bash
+        run: |
+          set -uo pipefail
+          printf '%s\n' 'brew install maelys-dev/tap/maelys-datalog'
+          set +e
+          brew install maelys-dev/tap/maelys-datalog 2>&1 | tee "$RUNNER_TEMP/cli-homebrew-probe-install.txt"
+          probe_status=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$probe_status" > "$RUNNER_TEMP/cli-homebrew-probe-exit.txt"
+          printf '\nInstallation command exit status: %s\n' "$probe_status"
+          if [ "$probe_status" -eq 0 ]; then
+            brew list --versions maelys-datalog | tee "$RUNNER_TEMP/cli-homebrew-probe-installed.txt"
+            maelys-datalog version | tee "$RUNNER_TEMP/cli-homebrew-probe-cli-version.txt"
+            test "$(maelys-datalog version)" = 'maelys-datalog 0.4.1'
+          fi
+      - name: Preserve exact installation output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: direct-cli-homebrew-without-trust
+          path: ${{ runner.temp }}/cli-homebrew-probe-*.txt
+          if-no-files-found: error
+          retention-days: 14
