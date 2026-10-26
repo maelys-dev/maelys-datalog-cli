@@ -4,12 +4,18 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Translate diagnosed explanation messages and hints in French human output,
+  while preserving canonical structured JSON and successful explanation text.
+
 - Preserve diagnosed explanation failures, including the SDK message, hint and
   structured predicate/phase details; never reduce missing symbols to not_found.
 
 - Accept an installed SDK at or above the pinned minimum, within public API 2
   and program ABI 2, verified by compiling its public headers. Reject older
   versions or incompatible contracts before linking.
+
+- Add French human help, CLI diagnostic templates and a French manual while
+  preserving canonical JSON and verbatim engine explanation documents.
 
 - Generate and install the manual from the command catalog; expose the same
   manual as an optional MDX build artifact.

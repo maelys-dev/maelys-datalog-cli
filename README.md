@@ -85,3 +85,8 @@ Failures preserve their general agent-cli code and carry [structured causes](doc
 `man maelys-datalog` is installed with the CLI, generated from the catalog.
 `make manual-mdx` renders the same manual into `build/man/maelys-datalog.mdx`
 for a documentation site; neither rendering is maintained by hand.
+
+Human help and CLI diagnostics support `--lang fr`, `MAELYS_CLI_LANG` and locale
+selection. English remains canonical; JSON identifiers, messages and structured
+data retain their canonical bytes. Known explanation diagnostic messages and hints are translated for human text;
+the SDK diagnostic in JSON and engine explanation documents are preserved verbatim. Both English and French manuals are installed.

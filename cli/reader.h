@@ -15,6 +15,9 @@ typedef struct {
 
 typedef struct {
     char message[256];
+    const char *message_argument; /* Optional path for a single %s template. */
+    int json_error_code;
+    const char *message_template; /* Literal template for human diagnostics. */
     size_t index, line, column;
     int has_index;
     int parse_error;

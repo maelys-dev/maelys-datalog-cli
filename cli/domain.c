@@ -75,16 +75,16 @@ int datalog_cli_domain_read(const char *path, datalog_cli_domain_t *out,
         struct stat metadata;
         error->not_found = error->io_error && stat(path, &metadata) != 0 &&
             (errno == ENOENT || errno == ENOTDIR);
-        if (error->not_found)
-            (void)snprintf(error->message, sizeof(error->message),
-                           "domain file not found: %s", path);
-        else if (error->io_error)
-            (void)snprintf(error->message, sizeof(error->message),
-                           "cannot read domain file: %s", path);
-        else
-            (void)snprintf(error->message, sizeof(error->message),
-                           "domain JSON rejected (%d) at %zu:%zu", (int)rc,
-                           json_error.line, json_error.column);
+        if (error->not_found || error->io_error) {
+            error->message_template = error->not_found ? "domain file not found: %s" : "cannot read domain file: %s";
+            error->message_argument = path;
+            (void)snprintf(error->message, sizeof(error->message), error->message_template, path);
+        } else {
+            error->message_template = "domain JSON rejected (%d) at %zu:%zu";
+            error->json_error_code = (int)rc;
+            (void)snprintf(error->message, sizeof(error->message), error->message_template,
+                           (int)rc, json_error.line, json_error.column);
+        }
         return -1;
     }
     const maelys_json_document_t *doc = out->document;

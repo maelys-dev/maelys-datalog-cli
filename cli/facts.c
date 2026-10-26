@@ -19,8 +19,9 @@ static void advance(scanner_t *s) {
     ++s->at;
 }
 
-static int fail(datalog_cli_error_t *error, scanner_t *s, size_t index,
-                const char *message) {
+static int fail_impl(datalog_cli_error_t *error, scanner_t *s, size_t index,
+                     const char *message, const char *message_template) {
+    error->message_template = message_template;
     (void)snprintf(error->message, sizeof(error->message),
                    "fact %zu at %zu:%zu: %s", index, s->line, s->column,
                    message);
@@ -30,6 +31,9 @@ static int fail(datalog_cli_error_t *error, scanner_t *s, size_t index,
     error->column = s->column;
     return -1;
 }
+
+#define fail(error, scanner, index, message) \
+    fail_impl(error, scanner, index, message, "fact %zu at %zu:%zu: " message)
 
 static int valid_utf8(const unsigned char *text, size_t size) {
     for (size_t i = 0; i < size;) {
@@ -211,9 +215,9 @@ static int read_file(const char *path, char **out, datalog_cli_error_t *error) {
     if (!file) {
         error->not_found = errno == ENOENT || errno == ENOTDIR;
         error->io_error = !error->not_found;
-        (void)snprintf(error->message, sizeof(error->message),
-                       error->not_found ? "facts file not found: %s" :
-                                          "cannot open facts: %s", path);
+        error->message_template = error->not_found ? "facts file not found: %s" : "cannot open facts: %s";
+        error->message_argument = path;
+        (void)snprintf(error->message, sizeof(error->message), error->message_template, path);
         return -1;
     }
     const size_t limit = 16u * 1024u * 1024u;
