@@ -4,6 +4,14 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Adopt the published v0.22.0 compatibility-freeze SDK. Preserve the explicit
+  unsupported nonzero work-limit diagnostic for the reference backend.
+- Replay caller-owned policy liveness and session lifetime against installed
+  public SDK headers: released policy accessors return `INVALID_STATE` without
+  changing outputs, while an existing session survives arena reuse.
+
 ## 0.3.1 — 2026-10-03
 
 ### Fixed
