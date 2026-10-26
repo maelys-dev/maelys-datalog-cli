@@ -960,10 +960,14 @@ static const maelys_cli_option_t explain_options[] = {
 static const maelys_cli_example_t check_examples[] = {
     {MAELYS_CLI_EXAMPLE("check --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
                         "Validate the RBAC policy and its domain.")},
+    {MAELYS_CLI_EXAMPLE("check --domain cli/tests/fixtures/rbac.domain.json --domain cli/tests/fixtures/typed.domain.json --manifest cli/tests/fixtures/examples.manifest.json",
+                        "Validate a manifest with two domains.")},
 };
 static const maelys_cli_example_t inspect_examples[] = {
     {MAELYS_CLI_EXAMPLE("inspect --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
                         "Inspect the RBAC compiled policy and its authorized queries.")},
+    {MAELYS_CLI_EXAMPLE("inspect --domain cli/tests/fixtures/rbac.domain.json --domain cli/tests/fixtures/typed.domain.json --manifest cli/tests/fixtures/examples.manifest.json",
+                        "Inspect the enabled policies of a multi-domain manifest.")},
 };
 
 static const maelys_cli_example_t queries_examples[] = {
@@ -977,10 +981,20 @@ static const maelys_cli_example_t fingerprint_examples[] = {
 static const maelys_cli_example_t solve_examples[] = {
     {MAELYS_CLI_EXAMPLE("solve --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl cli/tests/fixtures/rbac.dl",
                         "Solve the RBAC policy against the example facts.")},
+    {MAELYS_CLI_EXAMPLE("solve --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl --query can_deliver/1 cli/tests/fixtures/rbac.dl",
+                        "Select only the delivery query.")},
 };
 static const maelys_cli_example_t explain_examples[] = {
     {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl --why true cli/tests/fixtures/rbac.dl can_deliver \"Leela\"",
                         "Explain why Leela can receive a delivery.")},
+    {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl --why false cli/tests/fixtures/rbac.dl can_deliver \"Mallory\" --format json",
+                        "Read a structured explanation of an absent delivery permission.")},
+    {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/typed.domain.json --facts cli/tests/fixtures/typed.facts.dl --why true cli/tests/fixtures/typed.dl seen \"Leela\"",
+                        "Explain a symbol query; preserve its inner quotes as one shell argument.")},
+    {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/typed.domain.json --facts cli/tests/fixtures/typed.facts.dl --why true cli/tests/fixtures/typed.dl seen 3",
+                        "Explain an integer query.")},
+    {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/typed.domain.json --facts cli/tests/fixtures/typed.facts.dl --why true cli/tests/fixtures/typed.dl seen true",
+                        "Explain a boolean query.")},
 };
 
 static const maelys_cli_command_t commands[] = {

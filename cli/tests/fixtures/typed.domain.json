@@ -1,0 +1,18 @@
+{
+  "format": "maelys-datalog-domain-v1",
+  "name": "typed_cli",
+  "predicates": [
+    {
+      "name": "input",
+      "arity": 1,
+      "role": "edb"
+    },
+    {
+      "name": "seen",
+      "arity": 1,
+      "role": "idb",
+      "query": true
+    }
+  ],
+  "atoms": []
+}

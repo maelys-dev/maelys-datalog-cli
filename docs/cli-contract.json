@@ -317,6 +317,18 @@
                 "cli/tests/fixtures/rbac.domain.json",
                 "cli/tests/fixtures/rbac.dl"
               ]
+            },
+            {
+              "summary": "Validate a manifest with two domains.",
+              "words": [
+                "check",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "--domain",
+                "cli/tests/fixtures/typed.domain.json",
+                "--manifest",
+                "cli/tests/fixtures/examples.manifest.json"
+              ]
             }
           ],
           "exitCodes": {
@@ -714,6 +726,18 @@
                 "--domain",
                 "cli/tests/fixtures/rbac.domain.json",
                 "cli/tests/fixtures/rbac.dl"
+              ]
+            },
+            {
+              "summary": "Inspect the enabled policies of a multi-domain manifest.",
+              "words": [
+                "inspect",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "--domain",
+                "cli/tests/fixtures/typed.domain.json",
+                "--manifest",
+                "cli/tests/fixtures/examples.manifest.json"
               ]
             }
           ],
@@ -1262,6 +1286,19 @@
                 "cli/tests/fixtures/rbac.facts.dl",
                 "cli/tests/fixtures/rbac.dl"
               ]
+            },
+            {
+              "summary": "Select only the delivery query.",
+              "words": [
+                "solve",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "--facts",
+                "cli/tests/fixtures/rbac.facts.dl",
+                "--query",
+                "can_deliver/1",
+                "cli/tests/fixtures/rbac.dl"
+              ]
             }
           ],
           "exitCodes": {
@@ -1575,6 +1612,68 @@
                 "cli/tests/fixtures/rbac.dl",
                 "can_deliver",
                 "\"Leela\""
+              ]
+            },
+            {
+              "summary": "Read a structured explanation of an absent delivery permission.",
+              "words": [
+                "explain",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "--facts",
+                "cli/tests/fixtures/rbac.facts.dl",
+                "--why",
+                "false",
+                "cli/tests/fixtures/rbac.dl",
+                "can_deliver",
+                "\"Mallory\"",
+                "--format",
+                "json"
+              ]
+            },
+            {
+              "summary": "Explain a symbol query; preserve its inner quotes as one shell argument.",
+              "words": [
+                "explain",
+                "--domain",
+                "cli/tests/fixtures/typed.domain.json",
+                "--facts",
+                "cli/tests/fixtures/typed.facts.dl",
+                "--why",
+                "true",
+                "cli/tests/fixtures/typed.dl",
+                "seen",
+                "\"Leela\""
+              ]
+            },
+            {
+              "summary": "Explain an integer query.",
+              "words": [
+                "explain",
+                "--domain",
+                "cli/tests/fixtures/typed.domain.json",
+                "--facts",
+                "cli/tests/fixtures/typed.facts.dl",
+                "--why",
+                "true",
+                "cli/tests/fixtures/typed.dl",
+                "seen",
+                "3"
+              ]
+            },
+            {
+              "summary": "Explain a boolean query.",
+              "words": [
+                "explain",
+                "--domain",
+                "cli/tests/fixtures/typed.domain.json",
+                "--facts",
+                "cli/tests/fixtures/typed.facts.dl",
+                "--why",
+                "true",
+                "cli/tests/fixtures/typed.dl",
+                "seen",
+                "true"
               ]
             }
           ],

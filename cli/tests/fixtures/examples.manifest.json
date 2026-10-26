@@ -1,0 +1,42 @@
+{
+  "policy_set_id": "cli_examples",
+  "policy_set_version": "1",
+  "manifest_version": "1",
+  "default_profile": "enforce",
+  "created_for": "CLI examples",
+  "strict_loading": true,
+  "fail_closed": true,
+  "capabilities": [],
+  "policies": [
+    {
+      "policy_id": "rbac",
+      "domain": "rbac_cli",
+      "file": "rbac.dl",
+      "sha256": "b354e98edd7b736c03ff2624c6e84eb1d3fa23599e808f43c49b2bc27f091e64",
+      "mode": "enforce",
+      "enabled": true,
+      "description": "CLI example",
+      "queries": [
+        {
+          "name": "can_deliver",
+          "arity": 1
+        }
+      ]
+    },
+    {
+      "policy_id": "typed",
+      "domain": "typed_cli",
+      "file": "typed.dl",
+      "sha256": "4d377eb13e6ebb150345ff6aa860530294c255793e83ea538f18b95b7367b841",
+      "mode": "enforce",
+      "enabled": true,
+      "description": "CLI example",
+      "queries": [
+        {
+          "name": "seen",
+          "arity": 1
+        }
+      ]
+    }
+  ]
+}
