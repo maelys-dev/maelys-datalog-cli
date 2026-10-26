@@ -134,6 +134,8 @@ def basic():
         for key in ("policyFingerprint", "executionFingerprint"):
             if key in result:
                 result[key] = "<fingerprint>"
+        if command == "explain":
+            result.pop("structure")  # Existing document/envelope fields stay byte-identical.
         assert result == json.loads((FIXTURE / f"golden-{command}.json").read_text())
     assert run("solve", "--domain", domain, "--facts", facts,
                "--query", "missing", policy, exit_code=1)["code"] == "NOT_FOUND"
@@ -407,8 +409,97 @@ def manifest_query_whitelist():
                    "--policy-id", "other", exit_code=1)["code"] == "VALIDATION_FAILED"
 
 
+def structured_explanations():
+    domain, policy, facts = (str(FIXTURE / f"rbac.{suffix}") for suffix in
+                             ("domain.json", "dl", "facts.dl"))
+    yes = run("explain", "--domain", domain, "--facts", facts, "--why", "true",
+              policy, "can_deliver", '"Leela"')
+    no = run("explain", "--domain", domain, "--facts", facts, "--why", "false",
+             policy, "can_deliver", '"Mallory"')
+    for result, who in ((yes, "Leela"), (no, "Mallory")):
+        structure = result["structure"]
+        assert structure["query"] == {"predicate": "can_deliver", "terms": [
+            {"kind": "symbol", "value": who}]}
+        assert structure["found"] == result["present"]
+        assert structure["status"] == "complete" and not structure["truncated"]
+        assert text("explain", "--domain", domain, "--facts", facts, "--why",
+                    result["why"], policy, "can_deliver", json.dumps(who)) == result["document"]
+    assert yes["structure"]["kind"] == "why-true"
+    premises = [p for step in yes["structure"]["steps"] for p in step["premises"]]
+    assert {p["origin"] for p in premises} == {"policy-fact", "edb", "idb"}
+    for p in premises:
+        if p["parentStep"] is not None:
+            parent = yes["structure"]["steps"][p["parentStep"]]
+            assert parent["fact"]["predicate"] == p["atom"]["predicate"]
+            assert parent["fact"]["terms"] == p["atom"]["terms"]
+    assert not yes["structure"]["obstacles"]
+    assert no["structure"]["kind"] == "why-false" and not no["structure"]["steps"]
+    assert {o["kind"] for o in no["structure"]["obstacles"]} == {"positive-no-match"}
+    assert any(binding["value"] == {"kind": "symbol", "value": "Mallory"}
+               for obstacle in no["structure"]["obstacles"] for binding in obstacle["bindings"])
+    absent = run("explain", "--domain", domain, "--facts", facts, "--why", "true",
+                 policy, "can_deliver", '"Mallory"')
+    assert absent["structure"]["status"] == "not-derived" and not absent["structure"]["found"]
+    present_false = run("explain", "--domain", domain, "--facts", facts, "--why", "false",
+                       policy, "can_deliver", '"Leela"')
+    assert present_false["structure"]["status"] == "not-applicable"
+    assert present_false["structure"]["found"] and not present_false["structure"]["obstacles"]
+
+
+def structured_cases():
+    with tempfile.TemporaryDirectory() as temp:
+        declaration = {"format": "maelys-datalog-domain-v1", "name": "structured_cases",
+                       "atoms": ["alice", "a", "z"], "predicates": [
+                           {"name": "seed", "arity": 1, "role": "edb"},
+                           {"name": "blocked", "arity": 1, "role": "edb"},
+                           {"name": "enabled", "arity": 1, "role": "policy_fact"},
+                           {"name": "seen", "arity": 1, "role": "idb", "query": True}]}
+        domain = temporary_file(temp, "domain.json", json.dumps(declaration))
+        def explain(source, inputs, why, term):
+            policy = temporary_file(temp, "policy.dl", source)
+            facts = temporary_file(temp, "facts.dl", inputs)
+            result = run("explain", "--domain", domain, "--facts", facts, "--why", why,
+                         policy, "seen", term)
+            assert text("explain", "--domain", domain, "--facts", facts, "--why", why,
+                        policy, "seen", term) == result["document"]
+            return result
+        source = "enabled(true). seen(X) :- seed(X), X >= 2, not(blocked(X)), enabled(true)."
+        inputs = "seed(1). seed(3). seed(4). blocked(4)."
+        yes = explain(source, inputs, "true", "3")["structure"]
+        premises = [p for step in yes["steps"] for p in step["premises"]]
+        comparison = next(p["comparison"] for p in premises if p["kind"] == "comparison-true")
+        assert comparison == {"operator": "greater-or-equal", "lhs": {"kind": "integer", "value": 3},
+                              "rhs": {"kind": "integer", "value": 2}}
+        assert any(p["kind"] == "negated-absence" for p in premises)
+        assert any(p.get("atom", {}).get("terms") == [{"kind": "boolean", "value": True}]
+                   for p in premises)
+        low = explain(source, inputs, "false", "1")["structure"]
+        assert any(o["kind"] == "comparison-false" for o in low["obstacles"])
+        blocked = explain(source, inputs, "false", "4")["structure"]
+        assert any(o["kind"] == "negative-contradicted" for o in blocked["obstacles"])
+        boolean = explain("seen(X) :- seed(X).", "seed(true).", "true", "true")["structure"]
+        assert boolean["query"]["terms"] == [{"kind": "boolean", "value": True}]
+        for prefix, why, expected in (("a", "true", "filter-true"), ("z", "false", "filter-false")):
+            result = explain(f'seen(X) :- seed(X), starts_with(X, "{prefix}").',
+                             'seed("alice").', why, '"alice"')["structure"]
+            records = ([p for step in result["steps"] for p in step["premises"]]
+                       if why == "true" else result["obstacles"])
+            record = next(p for p in records if p["kind"] == expected)
+            assert record["filter"]["value"] == {"kind": "symbol", "value": "alice"}
+        missing = explain("enabled(true).", 'seed("alice").', "false", '"alice"')["structure"]
+        assert missing["summary"] == "no-candidate-rule" and not missing["obstacles"]
+        recursive = explain("seen(X) :- seen(X).", 'seed("alice").', "false", '"alice"')["structure"]
+        assert any(o["kind"] == "recursive-no-base-support" for o in recursive["obstacles"])
+        truncated = explain("seen(X) :- seed(X), blocked(X).\n" * 17,
+                            'seed("alice").', "false", '"alice"')
+        assert truncated["structure"]["truncated"] and truncated["structure"]["status"] == "truncated"
+        assert truncated["structure"]["limits"] and "status=truncated" in truncated["document"]
+
+
 if __name__ == "__main__":
     basic()
+    structured_explanations()
+    structured_cases()
     malformed()
     escaped_symbols()
     schema_arity()
