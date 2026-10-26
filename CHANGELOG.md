@@ -2,7 +2,7 @@
 
 All notable changes to `maelys-datalog-cli` are documented here.
 
-## [Unreleased]
+## 0.5.0 — 2026-10-26
 
 - Agree the solve fact count in English and French, including singular and
   plural output; keep structured results unchanged.
