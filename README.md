@@ -72,8 +72,10 @@ Homebrew builds statically against `maelys-dev/tap/libmaelys-datalog`; installed
 CLI bottles need no separate engine library at runtime. Source builds still use
 the verified engine tag and commit. To consume an existing SDK instead, set
 `INSTALLED_SDK_PREFIX` to its installation prefix. Its pkg-config version must
-match the engine pin and its loaded profile must match `PROFILE` (SMALL by
-default). The prefix is read only: missing archives, wrong versions or profile
+be at least the engine pin, and its installed public headers must declare API 2
+and program ABI 2. Its loaded profile must match `PROFILE` (SMALL by
+default). The prefix is read only: missing archives, older versions, different contracts or profile
 mismatches fail rather than triggering a source build there. This checks package
-version and loaded profile, not cryptographic provenance of a supplied archive.
-A later Homebrew library version requires an explicit dependency adoption.
+version, compiled public contract and loaded profile, not cryptographic provenance of a supplied archive.
+A newer stable Homebrew SDK is accepted within that frozen contract; source
+builds still use the exact tag and commit declared by the pin.

@@ -58,7 +58,7 @@ check-engine-contract: check-dependencies
 
 else
 check-engine-contract: check-dependencies
-	@python3 scripts/check-installed-sdk.py "$(SDK_PREFIX)" dependencies/maelys-datalog.pin
+	@CC="$(CC)" python3 scripts/check-installed-sdk.py "$(SDK_PREFIX)" dependencies/maelys-datalog.pin
 	@mkdir -p "$(BUILD_DIR)/bin"
 	$(CC) -std=c11 -Wall -Wextra -Werror $(PROFILE_CFLAGS) $(SANITIZE_FLAGS) \
 		-I$(SDK_PREFIX)/include cli/tests/sdk_profile.c $(ENGINE_LIB) -o $(BUILD_DIR)/bin/sdk-profile
@@ -163,7 +163,7 @@ $(BUILD_DIR)/bin/sdk-profile: cli/tests/sdk_profile.c | $(ENGINE_LIB)
 		-I$(SDK_PREFIX)/include $< $(ENGINE_LIB) -o $@
 
 installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime $(BUILD_DIR)/bin/sdk-reservations $(BUILD_DIR)/bin/sdk-profile
-	python3 scripts/check-installed-sdk.py "$(SDK_PREFIX)" dependencies/maelys-datalog.pin
+	CC="$(CC)" python3 scripts/check-installed-sdk.py "$(SDK_PREFIX)" dependencies/maelys-datalog.pin
 	$(BUILD_DIR)/bin/sdk-profile
 	$(BUILD_DIR)/bin/sdk-policy-lifetime
 	$(BUILD_DIR)/bin/sdk-reservations
@@ -172,8 +172,12 @@ installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime $(BUILD_DIR)/bi
 	@$(BIN) check --domain cli/tests/fixtures/rbac.domain.json \
 		cli/tests/fixtures/rbac.dl --format json --compact >/dev/null
 
+.PHONY: sdk-compatibility-check
+sdk-compatibility-check:
+	CC="$(CC)" python3 cli/tests/test_installed_sdk.py
+
 check: check-engine-contract check-cli-contract check-json-contract \
-    check-spec-contract cli-test conformance-check installed-sdk-check
+    check-spec-contract cli-test conformance-check installed-sdk-check sdk-compatibility-check
 
 asan-cli:
 	$(MAKE) BUILD_DIR=build/asan-$(PROFILE) PROFILE=$(PROFILE) \
