@@ -4,9 +4,15 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Preserve diagnosed explanation failures, including the SDK message, hint and
+  structured predicate/phase details; never reduce missing symbols to not_found.
+
 - Accept an installed SDK at or above the pinned minimum, within public API 2
   and program ABI 2, verified by compiling its public headers. Reject older
   versions or incompatible contracts before linking.
+
+- Preserve machine-readable failure causes, reader locations and public SDK
+  diagnostic fields in error.issues and x-datalog.
 
 - Expand the startup-validated help examples for manifests, selected queries,
   structured absence explanations and symbol/integer/boolean terms.

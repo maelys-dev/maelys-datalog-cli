@@ -126,6 +126,68 @@ def catalog_examples():
                 assert len(result.get("policies", [])) == 2
 
 
+def diagnostic_details():
+    domain, policy, facts = (FIXTURE / ("rbac." + suffix) for suffix in
+                            ("domain.json", "dl", "facts.dl"))
+    missing = run("solve", "--domain", domain, "--facts", "missing-facts.dl", policy, exit_code=1)
+    assert missing["code"] == "NOT_FOUND"
+    assert missing["issues"][0]["code"] == "DATALOG_FACTS"
+    assert missing["issues"][0]["path"] == "missing-facts.dl"
+    with tempfile.TemporaryDirectory() as directory:
+        bad = pathlib.Path(directory) / 'bad"facts.dl'
+        bad.write_text('request("Leela",).')
+        error = run("solve", "--domain", domain, "--facts", bad, policy, exit_code=1)
+        assert error["issues"][0]["path"] == str(bad)
+        assert error["issues"][0]["code"] == "DATALOG_FACTS"
+        assert error["x-datalog"]["line"] == 1 and error["x-datalog"]["column"] > 0
+        assert error["x-datalog"]["index"] == 0
+        bad_domain = pathlib.Path(directory) / "domain.json"
+        bad_domain.write_text('{')
+        error = run("inspect", "--domain", bad_domain, policy, exit_code=1)
+        assert error["issues"][0]["code"] == "DATALOG_DOMAIN"
+        assert error["issues"][0]["path"] == str(bad_domain)
+    error = run("explain", "--domain", domain, "--facts", facts, "--why", "true",
+                policy, "unknown", '"Leela"', exit_code=1)
+    assert error["code"] == "NOT_FOUND"
+    assert error["issues"][0]["code"] == "DATALOG_QUERY_UNKNOWN"
+    with tempfile.TemporaryDirectory() as directory:
+        source = pathlib.Path(directory) / "bad.dl"
+        source.write_text("allow( :-")
+        error = run("inspect", "--domain", domain, source, exit_code=1)
+        assert error["issues"][0]["code"] == "DATALOG_ENGINE"
+        diagnostic = error["x-datalog"]["diagnostic"]
+        assert diagnostic["code"] and diagnostic["phase"]
+
+
+
+def diagnosed_explanations():
+    domain, policy, facts = (FIXTURE / ("rbac." + suffix) for suffix in
+                            ("domain.json", "dl", "facts.dl"))
+    cases = [("explain-present", "true", "can_deliver", '\"Leela\"', 0),
+             ("explain", "false", "can_deliver", '\"Mallory\"', 0),
+             ("explain-unknown", "true", "unknown", '\"Leela\"', 1),
+             ("explain-unseen", "true", "can_deliver", '\"UnseenSymbol\"', 1),
+             ("explain-unseen", "false", "can_deliver", '\"UnseenSymbol\"', 1)]
+    for name, why, predicate, term, status in cases:
+        args = ("--domain", domain, "--facts", facts, "--why", why, policy, predicate, term)
+        human = text("explain", *args, exit_code=status)
+        assert "[NOT_FOUND] not_found" not in human
+        assert re.sub(r"[0-9a-f]{64}", "<fingerprint>", human) == (FIXTURE / f"golden-{name}.txt").read_text()
+        result = run("explain", *args, exit_code=status)
+        if name == "explain-unseen":
+            diagnostic = result["x-datalog"]["diagnostic"]
+            assert diagnostic["phase"] == "explanation" and diagnostic["predicate"] == predicate
+            assert diagnostic["hint"] == result["hint"] and result["message"] != "not_found"
+        elif name == "explain":
+            assert result["structure"]["obstacles"] and not result["present"]
+        elif name == "explain-present":
+            assert result["present"] and result["structure"]["steps"]
+        for key in ("policyFingerprint", "executionFingerprint"):
+            if key in result:
+                result[key] = "<fingerprint>"
+        assert result == json.loads((FIXTURE / f"golden-{name}.json").read_text())
+
+
 def temporary_file(directory, name, content):
     path = pathlib.Path(directory) / name
     path.write_bytes(content if isinstance(content, bytes) else content.encode())
@@ -192,8 +254,6 @@ def basic():
         for key in ("policyFingerprint", "executionFingerprint"):
             if key in result:
                 result[key] = "<fingerprint>"
-        if command == "explain":
-            result.pop("structure")  # Existing document/envelope fields stay byte-identical.
         assert result == json.loads((FIXTURE / f"golden-{command}.json").read_text())
     assert run("solve", "--domain", domain, "--facts", facts,
                "--query", "missing", policy, exit_code=1)["code"] == "NOT_FOUND"
@@ -566,4 +626,6 @@ if __name__ == "__main__":
     manifest_query_whitelist()
     help_catalog()
     catalog_examples()
+    diagnostic_details()
+    diagnosed_explanations()
     print("cli behavior and schemas: PASS")

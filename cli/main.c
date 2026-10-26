@@ -52,16 +52,63 @@ static void cleanup(state_t *state) {
     memset(state, 0, sizeof(*state));
 }
 
+static void diagnostic_json(maelys_cli_json_writer_t *, const maelys_datalog_diagnostic_t *);
+
+/* Keep machine detail independent of the human sentence. All strings pass
+ * through the JSON writer; an absent location is omitted, never guessed. */
+static int detailed_failure(maelys_cli_context_t *context, const char *code,
+    const char *cause, const char *message, const char *path,
+    const datalog_cli_error_t *reader, const maelys_datalog_diagnostic_t *diagnostic) {
+    maelys_cli_error_t error = {0};
+    maelys_cli_error_set(&error, code,
+        diagnostic && diagnostic->hint[0] ? diagnostic->hint : NULL, "%s", message);
+    maelys_cli_json_writer_t issues, extensions;
+    maelys_cli_json_writer_init(&issues);
+    maelys_cli_json_writer_init(&extensions);
+    (void)maelys_cli_json_begin_array(&issues);
+    (void)maelys_cli_json_begin_object(&issues);
+    (void)maelys_cli_json_key_string(&issues, "code", cause);
+    (void)maelys_cli_json_key_string(&issues, "message", message);
+    if (path && path[0]) (void)maelys_cli_json_key_string(&issues, "path", path);
+    (void)maelys_cli_json_end_object(&issues);
+    (void)maelys_cli_json_end_array(&issues);
+    (void)maelys_cli_json_begin_object(&extensions);
+    (void)maelys_cli_json_key(&extensions, "x-datalog");
+    (void)maelys_cli_json_begin_object(&extensions);
+    if (reader) {
+        if (reader->has_index) (void)maelys_cli_json_key_unsigned(&extensions, "index", reader->index);
+        if (reader->line) (void)maelys_cli_json_key_unsigned(&extensions, "line", reader->line);
+        if (reader->column) (void)maelys_cli_json_key_unsigned(&extensions, "column", reader->column);
+    }
+    if (diagnostic) {
+        (void)maelys_cli_json_key(&extensions, "diagnostic");
+        diagnostic_json(&extensions, diagnostic);
+    }
+    (void)maelys_cli_json_end_object(&extensions);
+    (void)maelys_cli_json_end_object(&extensions);
+    char *issue_text = maelys_cli_json_finish(&issues);
+    char *extension_text = maelys_cli_json_finish(&extensions);
+    if (!issue_text || !extension_text) {
+        free(issue_text); free(extension_text);
+        return maelys_cli_fail(context, MAELYS_CLI_CODE_UNEXPECTED, NULL,
+                               "Unable to serialize diagnostic details.");
+    }
+    int result = maelys_cli_fail_error_extended(context, &error, issue_text, extension_text);
+    free(issue_text); free(extension_text);
+    return result;
+}
+
 static int failure(maelys_cli_context_t *context, const char *code,
                    const char *message) {
-    return maelys_cli_fail(context, code, NULL, "%s", message);
+    return detailed_failure(context, code, "DATALOG_REQUEST", message, NULL, NULL, NULL);
 }
 
 static int status_failure(maelys_cli_context_t *context,
                           maelys_datalog_status_t status,
                           const maelys_datalog_diagnostic_t *diagnostic) {
     const char *message = diagnostic && diagnostic->message[0]
-        ? diagnostic->message : maelys_datalog_status_name(status);
+        ? diagnostic->message : status == MAELYS_DATALOG_STATUS_NOT_FOUND
+        ? "requested SDK object was not found" : maelys_datalog_status_name(status);
     const char *code = status == MAELYS_DATALOG_STATUS_NOT_FOUND
         ? MAELYS_CLI_CODE_NOT_FOUND : status == MAELYS_DATALOG_STATUS_UNSUPPORTED
         ? MAELYS_CLI_CODE_UNSUPPORTED : status == MAELYS_DATALOG_STATUS_IO
@@ -69,7 +116,9 @@ static int status_failure(maelys_cli_context_t *context,
         (status == MAELYS_DATALOG_STATUS_INTERNAL ||
          status == MAELYS_DATALOG_STATUS_INVALID_STATE)
         ? MAELYS_CLI_CODE_UNEXPECTED : MAELYS_CLI_CODE_VALIDATION_FAILED;
-    return failure(context, code, message);
+    return detailed_failure(context, code, "DATALOG_ENGINE", message,
+        diagnostic && (diagnostic->present & MAELYS_DATALOG_DIAGNOSTIC_LOCATION)
+            ? diagnostic->file : NULL, NULL, diagnostic);
 }
 
 static int read_source(const char *path, char **out, size_t *length) {
@@ -208,10 +257,10 @@ static int domains_load(maelys_cli_context_t *context, state_t *state,
         if (datalog_cli_domain_read(path, &state->domains[i], error) != 0) {
             if (checking && !error->parse_error && !error->io_error &&
                 !error->internal_error) return -2;
-            (void)failure(context, error->not_found ? MAELYS_CLI_CODE_NOT_FOUND
+            (void)detailed_failure(context, error->not_found ? MAELYS_CLI_CODE_NOT_FOUND
                           : error->io_error ? MAELYS_CLI_CODE_IO_FAILED
                           : error->internal_error ? MAELYS_CLI_CODE_UNEXPECTED
-                          : MAELYS_CLI_CODE_VALIDATION_FAILED, error->message);
+                          : MAELYS_CLI_CODE_VALIDATION_FAILED, "DATALOG_DOMAIN", error->message, path, error, NULL);
             return -1;
         }
         for (size_t j = 0; j < i; ++j)
@@ -503,10 +552,10 @@ static int solve_common(maelys_cli_context_t *context, state_t *state,
     const char *facts_path = maelys_cli_option(context, "facts");
     if (datalog_cli_facts_read(facts_path, &state->domains[0], &state->facts,
                                &error) != 0) {
-        (void)failure(context, error.not_found ? MAELYS_CLI_CODE_NOT_FOUND :
+        (void)detailed_failure(context, error.not_found ? MAELYS_CLI_CODE_NOT_FOUND :
                       error.io_error ? MAELYS_CLI_CODE_IO_FAILED :
                       error.internal_error ? MAELYS_CLI_CODE_UNEXPECTED :
-                      MAELYS_CLI_CODE_VALIDATION_FAILED, error.message);
+                      MAELYS_CLI_CODE_VALIDATION_FAILED, "DATALOG_FACTS", error.message, facts_path, &error, NULL);
         return -1;
     }
     if (make_session(context, state, 0u, explanations, 0) != 0) return -1;
@@ -723,8 +772,8 @@ static int command_solve(maelys_cli_context_t *context) {
     for (size_t i = 0; i < selected; ++i) {
         if (!query_predicate(domain, maelys_cli_option_at(context, "query", i))) {
             cleanup(&state);
-            return failure(context, MAELYS_CLI_CODE_NOT_FOUND,
-                           "unknown or non-query predicate");
+            return detailed_failure(context, MAELYS_CLI_CODE_NOT_FOUND, "DATALOG_QUERY_UNKNOWN",
+                                        "unknown or non-query predicate", NULL, NULL, NULL);
         }
     }
     char policy[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
@@ -848,13 +897,13 @@ static int command_explain(maelys_cli_context_t *context) {
     const char *name = maelys_cli_operand(context, 1u);
     const maelys_datalog_predicate_t *predicate = query_predicate(&state.domains[0], name);
     if (!predicate) {
-        cleanup(&state); return failure(context, MAELYS_CLI_CODE_NOT_FOUND,
-                                        "unknown or non-query predicate");
+        cleanup(&state); return detailed_failure(context, MAELYS_CLI_CODE_NOT_FOUND, "DATALOG_QUERY_UNKNOWN",
+                                        "unknown or non-query predicate", NULL, NULL, NULL);
     }
     size_t term_count = maelys_cli_operand_count(context) - 2u;
     if (term_count != predicate->arity) {
-        cleanup(&state); return failure(context, MAELYS_CLI_CODE_VALIDATION_FAILED,
-                                        "query term count differs from predicate arity");
+        cleanup(&state); return detailed_failure(context, MAELYS_CLI_CODE_VALIDATION_FAILED, "DATALOG_QUERY_ARITY",
+                                        "query term count differs from predicate arity", NULL, NULL, NULL);
     }
     maelys_datalog_value_t terms[MAELYS_DATALOG_PUBLIC_MAX_TERMS] = {0};
     char *owned[MAELYS_DATALOG_PUBLIC_MAX_TERMS] = {0};
@@ -869,19 +918,20 @@ static int command_explain(maelys_cli_context_t *context) {
         strcpy(owned[i], value);
         if (datalog_cli_term_parse(owned[i], &terms[i]) != 0) {
             for (size_t j = 0; j <= i; ++j) free(owned[j]);
-            cleanup(&state); return failure(context, MAELYS_CLI_CODE_VALIDATION_FAILED,
-                                            "invalid query term");
+            cleanup(&state); return detailed_failure(context, MAELYS_CLI_CODE_VALIDATION_FAILED, "DATALOG_QUERY_TERM",
+                                        "invalid query term", NULL, NULL, NULL);
         }
     }
     int present = 0;
+    maelys_datalog_diagnostic_t diagnostic = MAELYS_DATALOG_DIAGNOSTIC_INIT;
     maelys_datalog_status_t rc = maelys_datalog_result_query(
         state.result, predicate->name, terms, term_count, &present);
     size_t required = 0;
     char *document = NULL;
     if (rc == MAELYS_DATALOG_STATUS_OK)
-        rc = maelys_datalog_result_prepare_explanation(state.result,
+        rc = maelys_datalog_result_prepare_explanation_diagnosed(state.result,
             (maelys_datalog_explanation_kind_t)kind, predicate->name, terms, term_count,
-            state.explanation_storage, state.explanation_bytes, &state.explanation);
+            state.explanation_storage, state.explanation_bytes, &state.explanation, &diagnostic);
     if (rc == MAELYS_DATALOG_STATUS_OK)
         rc = maelys_datalog_prepared_explanation_text_size(state.explanation, &required);
     if (rc == MAELYS_DATALOG_STATUS_OK) {
@@ -892,7 +942,10 @@ static int command_explain(maelys_cli_context_t *context) {
         rc = maelys_datalog_prepared_explanation_write_text(state.explanation, document, required + 1u);
     if (rc != MAELYS_DATALOG_STATUS_OK) {
         for (size_t i = 0; i < term_count; ++i) free(owned[i]);
-        free(document); cleanup(&state); return status_failure(context, rc, NULL);
+        free(document); cleanup(&state);
+        return status_failure(context, rc,
+            diagnostic.status == rc && diagnostic.code != MAELYS_DATALOG_DIAG_NONE
+                ? &diagnostic : NULL);
     }
     char policy[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
     char execution[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];

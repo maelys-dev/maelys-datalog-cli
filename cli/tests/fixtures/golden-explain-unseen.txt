@@ -1,0 +1,2 @@
+maelys-datalog: [NOT_FOUND] query symbol absent from the result
+Hint: query a symbol the result contains

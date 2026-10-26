@@ -79,3 +79,5 @@ mismatches fail rather than triggering a source build there. This checks package
 version, compiled public contract and loaded profile, not cryptographic provenance of a supplied archive.
 A newer stable Homebrew SDK is accepted within that frozen contract; source
 builds still use the exact tag and commit declared by the pin.
+
+Failures preserve their general agent-cli code and carry [structured causes](docs/specifications/maelys-datalog-diagnostics-v1.md) for agents and editors.
