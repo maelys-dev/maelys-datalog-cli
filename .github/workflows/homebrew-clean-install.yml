@@ -1,0 +1,56 @@
+name: verify Homebrew 0.4.1 clean installation
+
+on:
+  push:
+    branches: [test/homebrew-0.4.1-install]
+
+permissions:
+  contents: read
+
+jobs:
+  clean-install:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Confirm CLI and engine SDK are absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          brew --version
+          installed="$(brew list --formula -1)"
+          if printf '%s\n' "$installed" | grep -Eq '^(maelys-datalog|libmaelys-datalog)$'; then
+            echo 'The runner already has a Maelys CLI or SDK installation' >&2
+            exit 1
+          fi
+          test ! -e "$(brew --prefix)/bin/maelys-datalog"
+          echo 'Clean runner: CLI and engine SDK absent'
+      - name: Install the published tap formula
+        shell: bash
+        run: brew install maelys-dev/tap/maelys-datalog
+      - name: Verify 0.4.1 bottle, manuals and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(maelys-datalog version)"
+          printf '%s\n' "$actual"
+          test "$actual" = 'maelys-datalog 0.4.1'
+          brew info --json=v2 maelys-dev/tap/maelys-datalog > "$RUNNER_TEMP/maelys-installed.json"
+          python3 - "$RUNNER_TEMP/maelys-installed.json" <<'PY'
+          import json, sys
+          formula = json.load(open(sys.argv[1]))['formulae'][0]
+          installed = [x for x in formula['installed'] if x['version'] == '0.4.1']
+          assert len(installed) == 1, formula['installed']
+          assert installed[0]['poured_from_bottle'], installed[0]
+          print('Version 0.4.1 installed from the published bottle')
+          PY
+          prefix="$(brew --prefix maelys-dev/tap/maelys-datalog)"
+          test -f "$prefix/share/man/man1/maelys-datalog.1"
+          test -f "$prefix/share/man/fr/man1/maelys-datalog.1"
+          if brew list --formula -1 | grep -qx libmaelys-datalog; then
+            echo 'The bottle unexpectedly required the build-only engine SDK' >&2
+            exit 1
+          fi
+          otool -L "$prefix/bin/maelys-datalog"
+          brew test maelys-dev/tap/maelys-datalog
+          printf 'Clean macOS installation: `%s`, published bottle, manuals and formula test passed.\n' "$actual" >> "$GITHUB_STEP_SUMMARY"
