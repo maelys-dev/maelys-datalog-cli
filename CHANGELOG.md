@@ -14,6 +14,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
   and program ABI 2, verified by compiling its public headers. Reject older
   versions or incompatible contracts before linking.
 
+- Include bounded catalog-generated invocation tests in make check, separately
+  from the conformance kit and executable product examples.
+
 - Add French human help, CLI diagnostic templates and a French manual while
   preserving canonical JSON and verbatim engine explanation documents.
 

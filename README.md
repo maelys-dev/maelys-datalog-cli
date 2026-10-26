@@ -90,3 +90,10 @@ Human help and CLI diagnostics support `--lang fr`, `MAELYS_CLI_LANG` and locale
 selection. English remains canonical; JSON identifiers, messages and structured
 data retain their canonical bytes. Known explanation diagnostic messages and hints are translated for human text;
 the SDK diagnostic in JSON and engine explanation documents are preserved verbatim. Both English and French manuals are installed.
+
+`make invocation-check` runs the pinned contract's catalog-generated invocation
+campaign, also included in `make check`: fixed boundary cases plus eight generated
+lines per command, canonical/default JSON formats, a ten-second per-process timeout
+and a 180-second campaign budget. Each line gets an isolated directory and home;
+`--apply` is not enabled. An incomplete campaign fails rather than counting as a
+pass. Its line count is separate from the conformance kit's control count.
