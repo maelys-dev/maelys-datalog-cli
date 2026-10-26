@@ -1,0 +1,8 @@
+Le fait est présent : can_deliver("Leela").
+
+La règle 1 déduit allow("Leela", "billing:read").
+  - right("Leela", "billing:read"). (fait de la politique)
+
+La règle 2 déduit can_deliver("Leela").
+  - allow("Leela", "billing:read"). (fait déduit)
+  - request("Leela", "billing:read"). (fait d’entrée)

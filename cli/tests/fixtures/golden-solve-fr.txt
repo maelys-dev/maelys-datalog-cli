@@ -1,0 +1,4 @@
+allow/2 (1 fait) :
+  allow("Leela", "billing:read").
+can_deliver/1 (1 fait) :
+  can_deliver("Leela").

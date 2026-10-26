@@ -1709,6 +1709,14 @@
             ],
             "options": [
               {
+                "conflictsWith": [],
+                "long": "--raw",
+                "repeatable": false,
+                "required": false,
+                "requires": [],
+                "summary": "Print the SDK explanation document verbatim in text format; JSON always includes it."
+              },
+              {
                 "argument": {
                   "name": "FILE",
                   "type": "path"
@@ -1746,7 +1754,7 @@
                 "repeatable": false,
                 "required": true,
                 "requires": [],
-                "summary": "true: explain a derivation; false: explain an absent fact. Use --format json for the text document and typed structure."
+                "summary": "true: explain a derivation; false: explain an absent fact. Text is readable prose; JSON retains the SDK document and typed structure."
               },
               {
                 "argument": {
@@ -1775,7 +1783,7 @@
               }
             ],
             "passthrough": false,
-            "synopsis": "explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true|false [--policy-id ID] [--work-limit N]"
+            "synopsis": "explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true|false [--raw] [--policy-id ID] [--work-limit N]"
           },
           "outputMode": "json-envelope",
           "outputSchema": {
@@ -2358,7 +2366,7 @@
             "explain"
           ],
           "purpose": "Evaluate a policy and explain why a fact is present or absent.",
-          "usage": "explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true|false [--policy-id ID] [--work-limit N]"
+          "usage": "explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true|false [--raw] [--policy-id ID] [--work-limit N]"
         }
       ],
       "contract": "agent-cli/v2",
@@ -2533,10 +2541,20 @@
         "canonical": "en",
         "languages": {
           "fr": {
+            "\nRule ": "\nLa r\u00e8gle ",
+            "\nThe explanation is incomplete: an exploration limit was reached.\n": "\nL\u2019explication est incompl\u00e8te : une limite d\u2019exploration a \u00e9t\u00e9 atteinte.\n",
             "  %zu predicates, %zu policy facts, %zu rules\n  program limits: input=%zu, derived=%zu, per predicate=%zu\n  inspection capacity: input=%zu, derived=%zu, symbols=%zu, text bytes=%zu\n": "  %zu pr\u00e9dicats, %zu faits de politique, %zu r\u00e8gles\n  limites du programme : entr\u00e9e=%zu, d\u00e9riv\u00e9s=%zu, par pr\u00e9dicat=%zu\n  capacit\u00e9s d\u2019inspection : entr\u00e9e=%zu, d\u00e9riv\u00e9s=%zu, symboles=%zu, octets de texte=%zu\n",
             "  (no authorized queries)\n": "  (aucune requ\u00eate autoris\u00e9e)\n",
             "  (none)\n": "  (aucun fait)\n",
+            "  Already satisfied: ": "  D\u00e9j\u00e0 satisfait : ",
+            "  With ": "  Avec ",
+            " (derived fact)": " (fait d\u00e9duit)",
             " (domain ": " (domaine ",
+            " (input fact)": " (fait d\u2019entr\u00e9e)",
+            " (policy fact)": " (fait de la politique)",
+            " cannot derive ": " ne peut pas d\u00e9duire ",
+            " derives ": " d\u00e9duit ",
+            "%s/%zu (%zu fact):\n": "%s/%zu (%zu fait) :\n",
             "%s/%zu (%zu facts):\n": "%s/%zu (%zu faits) :\n",
             "--manifest conflicts with an inline policy operand or --policy-id": "--manifest est incompatible avec une politique autonome ou --policy-id",
             "--work-limit requires WORK_LIMIT capability; the reference backend does not support a nonzero work limit": "--work-limit n\u00e9cessite la capacit\u00e9 WORK_LIMIT ; le backend de r\u00e9f\u00e9rence ne prend pas en charge une limite non nulle",
@@ -2561,17 +2579,42 @@
             "List the predicates each policy allows you to query.": "Lister les pr\u00e9dicats que chaque politique autorise \u00e0 interroger.",
             "Load a policy set instead of POLICY. Repeat --domain for each domain used by the manifest.": "Charger un ensemble de politiques \u00e0 la place de POLICY. R\u00e9p\u00e9ter --domain pour chaque domaine utilis\u00e9 par le manifeste.",
             "NUL byte in policy source": "octet NUL dans la source de la politique",
+            "Negation fails because this fact exists: ": "La n\u00e9gation \u00e9choue car ce fait existe : ",
+            "No derivation is available. Use --why false to inspect the obstacles.\n": "Aucune d\u00e9duction n\u2019est disponible. Utiliser --why false pour examiner les obstacles.\n",
             "No enabled policies.\n": "Aucune politique active.\n",
+            "No matching fact for ": "Aucun fait ne correspond \u00e0 ",
+            "No matching fact: ": "Aucun fait correspondant : ",
             "No query predicates declared.\n": "Aucun pr\u00e9dicat interrogeable d\u00e9clar\u00e9.\n",
+            "No rule can derive this fact.\n": "Aucune r\u00e8gle ne peut d\u00e9duire ce fait.\n",
             "One argument per term: an int64, true, false or a double-quoted symbol. Preserve the symbol quotes with shell quoting, e.g. '\"Leela\"'. Omit terms only for a predicate of arity zero.": "Un argument par terme : entier int64, true, false ou symbole entre guillemets doubles. Prot\u00e9ger ces guillemets dans le shell, par exemple '\"Leela\"'. Omettre les termes uniquement pour un pr\u00e9dicat d\u2019arit\u00e9 z\u00e9ro.",
             "Policy valid.": "Politique valide.",
             "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit.": "Budget coop\u00e9ratif de travail strictement positif, non pris en charge par le backend de r\u00e9f\u00e9rence. Omettre cette option pour ne pas fixer de limite.",
+            "Print the SDK explanation document verbatim in text format; JSON always includes it.": "Afficher le document d\u2019explication brut du SDK en format texte ; le JSON le contient toujours.",
             "Query the symbol \"Leela\"; keep its double quotes inside one shell argument.": "Interroger le symbole \"Leela\" ; conserver ses guillemets doubles dans un seul argument du shell.",
+            "Recursion has no supporting fact to start from: ": "La r\u00e9cursion n\u2019a aucun fait de d\u00e9part : ",
             "Select results by predicate name or name/arity. Repeat to select several; defaults to all authorized queries.": "S\u00e9lectionner les r\u00e9sultats par nom de pr\u00e9dicat ou nom/arit\u00e9. R\u00e9p\u00e9ter pour en s\u00e9lectionner plusieurs ; par d\u00e9faut, toutes les requ\u00eates autoris\u00e9es.",
             "Show compiled policy statistics, limits and authorized queries without solving.": "Afficher les statistiques, les limites et les requ\u00eates autoris\u00e9es des politiques compil\u00e9es, sans les ex\u00e9cuter.",
             "Show only can_deliver/1 results.": "Afficher uniquement les r\u00e9sultats de can_deliver/1.",
             "Show the RBAC policy and execution fingerprints.": "Afficher les empreintes de la politique RBAC et de son ex\u00e9cution.",
             "Show the policy fingerprint and its configured execution fingerprint.": "Afficher les empreintes de la politique et de sa configuration d\u2019ex\u00e9cution.",
+            "The comparison fails: ": "La comparaison \u00e9choue : ",
+            "The comparison holds: ": "La comparaison est satisfaite : ",
+            "The count condition holds for ": "La condition de comptage est satisfaite pour ",
+            "The fact is not derived: ": "Le fait n\u2019est pas d\u00e9duit : ",
+            "The fact is present, so an absence explanation does not apply:\n": "Le fait est pr\u00e9sent ; une explication de son absence ne s\u2019applique donc pas :\n",
+            "The fact is present: ": "Le fait est pr\u00e9sent : ",
+            "The filter accepts ": "Le filtre accepte ",
+            "The filter rejects ": "Le filtre rejette ",
+            "The maximum condition holds for ": "La condition de maximum est satisfaite pour ",
+            "The maximum differs from the requested value: ": "Le maximum diff\u00e8re de la valeur demand\u00e9e : ",
+            "The maximum has no matching input fact: ": "Le maximum n\u2019a aucun fait d\u2019entr\u00e9e correspondant : ",
+            "The minimum condition holds for ": "La condition de minimum est satisfaite pour ",
+            "The minimum differs from the requested value: ": "Le minimum diff\u00e8re de la valeur demand\u00e9e : ",
+            "The minimum has no matching input fact: ": "Le minimum n\u2019a aucun fait d\u2019entr\u00e9e correspondant : ",
+            "The number of matching facts differs from the requested value: ": "Le nombre de faits correspondants diff\u00e8re de la valeur demand\u00e9e : ",
+            "The sum condition holds for ": "La condition de somme est satisfaite pour ",
+            "The sum differs from the requested value: ": "La somme diff\u00e8re de la valeur demand\u00e9e : ",
+            "This does not prove that the fact cannot be derived.\n": "Cela ne prouve pas que le fait ne peut pas \u00eatre d\u00e9duit.\n",
             "Unable to serialize diagnostic details.": "Impossible de s\u00e9rialiser les d\u00e9tails du diagnostic.",
             "Validate Datalog policies, query facts and explain results.": "Valider des politiques Datalog, interroger les faits et expliquer les r\u00e9sultats.",
             "Validate a manifest with two domains.": "Valider un manifeste avec deux domaines.",
@@ -2628,7 +2671,7 @@
             "query term count differs from predicate arity": "le nombre de termes diff\u00e8re de l\u2019arit\u00e9 du pr\u00e9dicat",
             "requested SDK object was not found": "l\u2019objet demand\u00e9 au SDK est introuvable",
             "result introspection failed": "\u00e9chec de l\u2019introspection du r\u00e9sultat",
-            "true: explain a derivation; false: explain an absent fact. Use --format json for the text document and typed structure.": "true : expliquer une d\u00e9rivation ; false : expliquer l\u2019absence d\u2019un fait. Utiliser --format json pour obtenir le document textuel et la structure typ\u00e9e.",
+            "true: explain a derivation; false: explain an absent fact. Text is readable prose; JSON retains the SDK document and typed structure.": "true : expliquer une d\u00e9duction ; false : expliquer un fait absent. Le texte est lisible ; le JSON conserve le document du SDK et la structure typ\u00e9e.",
             "unknown or non-query predicate": "pr\u00e9dicat inconnu ou non interrogeable",
             "unknown predicate role": "r\u00f4le de pr\u00e9dicat inconnu",
             "unsupported domain format": "format de domaine non pris en charge",

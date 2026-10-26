@@ -1,0 +1,32 @@
+{
+  "policyFingerprint": "<fingerprint>",
+  "executionFingerprint": "<fingerprint>",
+  "predicate": "can_deliver",
+  "present": true,
+  "why": "false",
+  "document": "MAELYS-DATALOG-v2\ndocument=why-false\nstatus=not-applicable\nquery=\"can_deliver\"(\"Leela\") origin=idb\nsummary=none\nlimit-hits=none candidate-rules=0 substitutions=0 diagnostics=0 filter-cost=0\n",
+  "structure": {
+    "kind": "why-false",
+    "found": true,
+    "truncated": false,
+    "status": "not-applicable",
+    "summary": "none",
+    "limits": [],
+    "query": {
+      "predicate": "can_deliver",
+      "terms": [
+        {
+          "kind": "symbol",
+          "value": "Leela"
+        }
+      ]
+    },
+    "queryOrigin": "idb",
+    "candidateRuleCount": 0,
+    "substitutionCount": 0,
+    "filterCostUnits": 0,
+    "limitHits": 0,
+    "steps": [],
+    "obstacles": []
+  }
+}

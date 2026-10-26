@@ -1,0 +1,2 @@
+Le fait n’est pas déduit : can_deliver("Mallory").
+Aucune déduction n’est disponible. Utiliser --why false pour examiner les obstacles.

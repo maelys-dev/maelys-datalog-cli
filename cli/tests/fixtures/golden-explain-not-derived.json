@@ -1,0 +1,25 @@
+{
+  "policyFingerprint": "<fingerprint>",
+  "executionFingerprint": "<fingerprint>",
+  "predicate": "can_deliver",
+  "present": false,
+  "why": "true",
+  "document": "MAELYS-DATALOG-v2\ndocument=why-true\nstatus=not-derived\nsteps=0 premises=0\n",
+  "structure": {
+    "kind": "why-true",
+    "found": false,
+    "truncated": false,
+    "status": "not-derived",
+    "query": {
+      "predicate": "can_deliver",
+      "terms": [
+        {
+          "kind": "symbol",
+          "value": "Mallory"
+        }
+      ]
+    },
+    "steps": [],
+    "obstacles": []
+  }
+}
