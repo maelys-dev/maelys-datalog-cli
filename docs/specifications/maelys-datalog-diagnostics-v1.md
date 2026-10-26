@@ -34,3 +34,7 @@ message and hint are rendered in text; JSON retains the canonical message and
 hint plus `error["x-datalog"].diagnostic`, including phase and predicate. An
 unseen symbol is distinct from a known fact that is absent: the former is an
 operational error; the latter can carry a successful Why-false obstacle report.
+
+Known explanation diagnostic messages and hints are translated in French text
+mode. Machine fields and diagnostic strings remain canonical English, as with
+other CLI diagnostics; successful engine explanation documents remain verbatim.

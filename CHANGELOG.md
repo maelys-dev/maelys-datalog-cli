@@ -4,6 +4,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Translate diagnosed explanation messages and hints in French human output,
+  while preserving canonical structured JSON and successful explanation text.
+
 - Preserve diagnosed explanation failures, including the SDK message, hint and
   structured predicate/phase details; never reduce missing symbols to not_found.
 

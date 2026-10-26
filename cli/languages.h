@@ -2,6 +2,15 @@
 #ifndef DATALOG_CLI_LANGUAGES_H
 #define DATALOG_CLI_LANGUAGES_H
 static const maelys_cli_translation_t french_texts[] = {
+    {"query symbol absent from the result", "le symbole de la requête est absent du résultat"},
+    {"query a symbol the result contains", "interroger un symbole présent dans le résultat"},
+    {"explanation kind not supported by the backend", "ce type d’explication n’est pas pris en charge par le backend"},
+    {"use a backend that supports this explanation kind", "utiliser un backend prenant en charge ce type d’explication"},
+    {"explanation preparation failed", "échec de la préparation de l’explication"},
+    {"check the result lifetime, query, kind and explanation storage", "vérifier la durée de vie du résultat, la requête, le type d’explication et son stockage"},
+    {"query a declared query predicate with its declared arity", "interroger un prédicat déclaré comme interrogeable, avec son arité déclarée"},
+    {"requested SDK object was not found", "l’objet demandé au SDK est introuvable"},
+
     {"--work-limit requires WORK_LIMIT capability; the reference backend does not support a nonzero work limit", "--work-limit nécessite la capacité WORK_LIMIT ; le backend de référence ne prend pas en charge une limite non nulle"},
     {"%s/%zu (%zu facts):\n", "%s/%zu (%zu faits) :\n"},
     {"facts file not found: %s", "fichier de faits introuvable : %s"},

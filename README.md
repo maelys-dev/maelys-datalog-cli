@@ -88,5 +88,5 @@ for a documentation site; neither rendering is maintained by hand.
 
 Human help and CLI diagnostics support `--lang fr`, `MAELYS_CLI_LANG` and locale
 selection. English remains canonical; JSON identifiers, messages and structured
-data retain their canonical bytes. Public SDK diagnostics and engine explanation
-documents are preserved verbatim. Both English and French manuals are installed.
+data retain their canonical bytes. Known explanation diagnostic messages and hints are translated for human text;
+the SDK diagnostic in JSON and engine explanation documents are preserved verbatim. Both English and French manuals are installed.

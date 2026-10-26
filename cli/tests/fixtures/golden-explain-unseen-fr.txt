@@ -1,0 +1,2 @@
+maelys-datalog: [NOT_FOUND] le symbole de la requête est absent du résultat
+Conseil : interroger un symbole présent dans le résultat

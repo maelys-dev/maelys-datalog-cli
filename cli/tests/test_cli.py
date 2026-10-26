@@ -190,6 +190,12 @@ def diagnosed_explanations():
                 result[key] = "<fingerprint>"
         assert result == json.loads((FIXTURE / f"golden-{name}.json").read_text())
 
+        if status:
+            french = text("explain", *args, "--lang", "fr", exit_code=status)
+            assert french == (FIXTURE / f"golden-{name}-fr.txt").read_text()
+            assert "[NOT_FOUND] not_found" not in french
+            assert run("explain", *args, "--lang", "fr", exit_code=status) == result
+
 def french_text():
     def invoke(words, env=None):
         return subprocess.run([str(BINARY), *map(str, words)], text=True,

@@ -2581,12 +2581,15 @@
             "cannot read EDB fact limit": "impossible de lire la limite des faits EDB",
             "cannot read domain file: %s": "impossible de lire le domaine : %s",
             "cannot read engine limits": "impossible de lire les limites du moteur",
+            "check the result lifetime, query, kind and explanation storage": "v\u00e9rifier la dur\u00e9e de vie du r\u00e9sultat, la requ\u00eate, le type d\u2019explication et son stockage",
             "choose one POLICY or --manifest; manifest flags and multiple domains require --manifest": "choisir POLICY ou --manifest ; les options du manifeste et les domaines multiples n\u00e9cessitent --manifest",
             "domain JSON rejected (%d) at %zu:%zu": "JSON du domaine rejet\u00e9 (%d) \u00e0 %zu:%zu",
             "domain file not found: %s": "fichier de domaine introuvable : %s",
             "duplicate domain name": "nom de domaine dupliqu\u00e9",
             "execution fingerprint unavailable": "empreinte d\u2019ex\u00e9cution indisponible",
             "expected a JSON object": "objet JSON attendu",
+            "explanation kind not supported by the backend": "ce type d\u2019explication n\u2019est pas pris en charge par le backend",
+            "explanation preparation failed": "\u00e9chec de la pr\u00e9paration de l\u2019explication",
             "fact %zu at %zu:%zu: NUL in symbol string": "fait %zu \u00e0 %zu:%zu : octet NUL dans un symbole",
             "fact %zu at %zu:%zu: expected ')'": "fait %zu \u00e0 %zu:%zu : caract\u00e8re ')' attendu",
             "fact %zu at %zu:%zu: expected '.'": "fait %zu \u00e0 %zu:%zu : caract\u00e8re '.' attendu",
@@ -2618,11 +2621,16 @@
             "policy introspection failed": "\u00e9chec de l\u2019introspection de la politique",
             "policy metadata unavailable": "m\u00e9tadonn\u00e9es de politique indisponibles",
             "policy source exceeds 16 MiB": "la source de la politique d\u00e9passe 16 MiB",
+            "query a declared query predicate with its declared arity": "interroger un pr\u00e9dicat d\u00e9clar\u00e9 comme interrogeable, avec son arit\u00e9 d\u00e9clar\u00e9e",
+            "query a symbol the result contains": "interroger un symbole pr\u00e9sent dans le r\u00e9sultat",
+            "query symbol absent from the result": "le symbole de la requ\u00eate est absent du r\u00e9sultat",
             "query term count differs from predicate arity": "le nombre de termes diff\u00e8re de l\u2019arit\u00e9 du pr\u00e9dicat",
+            "requested SDK object was not found": "l\u2019objet demand\u00e9 au SDK est introuvable",
             "result introspection failed": "\u00e9chec de l\u2019introspection du r\u00e9sultat",
             "unknown or non-query predicate": "pr\u00e9dicat inconnu ou non interrogeable",
             "unknown predicate role": "r\u00f4le de pr\u00e9dicat inconnu",
-            "unsupported domain format": "format de domaine non pris en charge"
+            "unsupported domain format": "format de domaine non pris en charge",
+            "use a backend that supports this explanation kind": "utiliser un backend prenant en charge ce type d\u2019explication"
           }
         },
         "version": 1
