@@ -128,8 +128,39 @@ $(BIN): $(OBJECTS) $(BUILD_DIR)/obj/datalog_schemas.o $(ENGINE_LIB) $(CLI_LIB) $
 	@mkdir -p $(dir $@)
 	$(CC) $(SANITIZE_FLAGS) $^ -o $@
 
-cli-test: $(BIN) check-spec-contract
-	python3 cli/tests/test_cli.py $(abspath $(BIN)) "$(SPEC_DIR)"
+# Probe the installed public headers, not an SDK version-number assumption.
+SDK_RULE_VARIABLE_NAMES = $(shell $(CC) $(CLI_CFLAGS) -dM -E \
+    -include maelys/datalog_program.h -x c /dev/null | \
+    python3 -c 'import sys; print(int(any(line.split()[:2] == [chr(35)+"define", "MAELYS_DATALOG_HAS_RULE_VARIABLE_NAMES"] for line in sys.stdin)))')
+
+cli-test: $(BIN) check-spec-contract explanation-variable-names-check
+	python3 cli/tests/test_cli.py $(abspath $(BIN)) "$(SPEC_DIR)" $(SDK_RULE_VARIABLE_NAMES)
+	python3 cli/tests/test_explanation_variable_names.py $(abspath $(BIN)) \
+	    $(if $(filter 1,$(SDK_RULE_VARIABLE_NAMES)),--source-names,)
+
+
+# On SDK 0.26, exercise the announced API with a test double. A real SDK that
+# advertises names is tested directly by cli-test, without this extra symbol.
+.PHONY: explanation-variable-names-check
+explanation-variable-names-check: $(BIN)
+	@if test "$(SDK_RULE_VARIABLE_NAMES)" = 0; then \
+	    mkdir -p $(BUILD_DIR)/names; \
+	    $(CC) $(CLI_CFLAGS) -include cli/tests/sdk_rule_variable_names.h \
+	        -c cli/main.c -o $(BUILD_DIR)/names/main.o && \
+	    $(CC) $(CLI_CFLAGS) -include cli/tests/sdk_rule_variable_names.h \
+	        -c cli/explanation.c -o $(BUILD_DIR)/names/explanation.o && \
+	    $(CC) $(CLI_CFLAGS) -c cli/tests/sdk_rule_variable_names.c \
+	        -o $(BUILD_DIR)/names/api-double.o && \
+	    $(CC) $(SANITIZE_FLAGS) $(BUILD_DIR)/names/main.o \
+	        $(BUILD_DIR)/names/explanation.o $(BUILD_DIR)/names/api-double.o \
+	        $(BUILD_DIR)/obj/domain.o $(BUILD_DIR)/obj/facts.o \
+	        $(BUILD_DIR)/obj/datalog_schemas.o $(ENGINE_LIB) $(CLI_LIB) $(JSON_LIB) \
+	        -o $(BUILD_DIR)/names/maelys-datalog && \
+	    python3 cli/tests/test_explanation_variable_names.py \
+	        $(abspath $(BUILD_DIR))/names/maelys-datalog --source-names && \
+	    DATALOG_CLI_TEST_NAMES_UNAVAILABLE=1 python3 cli/tests/test_explanation_variable_names.py \
+	        $(abspath $(BUILD_DIR))/names/maelys-datalog; \
+	else echo "SDK provides source names: cli-test exercises the actual API"; fi
 
 conformance-check: $(BIN) check-spec-contract
 	python3 "$(SPEC_DIR)/conformance/run.py" $(abspath $(BIN))

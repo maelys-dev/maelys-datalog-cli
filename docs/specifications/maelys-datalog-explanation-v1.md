@@ -2,15 +2,24 @@
 
 `explain --format json` retains the SDK `document` string and typed `structure`,
 described by `cli/schemas/explain.json`. Default text renders the same prepared
-explanation as English or French sentences with Datalog facts and named source
-variables. `--raw` selects the original SDK document in text mode; in JSON mode
+explanation as English or French sentences with Datalog facts and variable
+bindings. `--raw` selects the original SDK document in text mode; in JSON mode
 the document is always available and `--raw` changes no data.
 
 All three representations come from the same prepared explanation and retained
 result; the CLI does not parse the text document to reconstruct proof records.
-The public standard-grammar contract maps IR variables 0–25 to source names A–Z;
-anonymous local variables render as `_`. A truncated absence explanation is
-explicitly incomplete and never presented as proof that no derivation exists.
+Variable IDs are rule-local identifiers, not a mapping to letters A–Z. Without
+source-name information, text uses `?N`, matching the raw SDK document, including
+anonymous variables. The SDK 0.26.0 has no public source-name accessor, so even
+single-letter variables use their numeric IDs. When the installed SDK defines
+`MAELYS_DATALOG_HAS_RULE_VARIABLE_NAMES`, the CLI asks
+`maelys_datalog_program_rule_variable_name` for the source spelling. It uses that
+name only on success, otherwise retaining `?N`. Public rule indices are
+zero-based; explanation rule IDs are index + 1. Names are borrowed only while the
+program remains alive. JSON variable IDs and the raw SDK document do not change.
+
+A truncated absence explanation is explicitly incomplete and never presented as
+proof that no derivation exists.
 
 The common fields are `kind` (`why-true` or `why-false`), `found`, `truncated`,
 `status`, the requested ground `query`, `steps`, and `obstacles`. Values retain

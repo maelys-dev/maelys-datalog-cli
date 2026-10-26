@@ -990,8 +990,14 @@ static int command_explain(maelys_cli_context_t *context) {
     rc = datalog_cli_explanation_json(&json, state.explanation, &query);
     char *human = NULL;
     if (rc == MAELYS_DATALOG_STATUS_OK && context->invocation->format == MAELYS_CLI_FORMAT_TEXT &&
-        !maelys_cli_flag(context, "raw"))
-        rc = datalog_cli_explanation_text(context, state.explanation, &query, &human);
+        !maelys_cli_flag(context, "raw")) {
+        const maelys_datalog_program_t *program = NULL;
+#ifdef MAELYS_DATALOG_HAS_RULE_VARIABLE_NAMES
+        /* Optional source names; failed lookup keeps opaque variable IDs. */
+        (void)maelys_datalog_session_program(state.session, &program);
+#endif
+        rc = datalog_cli_explanation_text(context, program, state.explanation, &query, &human);
+    }
     for (size_t i = 0; i < term_count; ++i) free(owned[i]);
     if (rc != MAELYS_DATALOG_STATUS_OK) {
         maelys_cli_json_writer_clear(&json);

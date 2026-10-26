@@ -97,8 +97,9 @@ data retain their canonical bytes (the rendered `help` text follows the selected
 language, including inside a JSON envelope). Known explanation diagnostic
 messages and hints are translated for human text; the SDK diagnostic in JSON
 and engine explanation documents in JSON are preserved verbatim. Default
-`explain` text presents facts, named variables and obstacles in readable English
-or French. `explain --raw` prints the original SDK document for inspection.
+`explain` text presents facts, variable bindings and obstacles in readable English
+or French. Variables use their rule-local `?N` identifiers unless the SDK exposes
+their source names; a failed name lookup also keeps `?N`. `explain --raw` prints the original SDK document for inspection.
 Both English and French manuals are installed.
 
 `make invocation-check` runs the pinned contract's catalog-generated invocation

@@ -1,0 +1,9 @@
+The fact is not derived: can_deliver("Mallory").
+
+Rule 1 cannot derive allow("Mallory", "billing:read").
+  With User = "Mallory".
+  No matching fact for right("Mallory", ?26).
+
+Rule 2 cannot derive can_deliver("Mallory").
+  With User = "Mallory".
+  No matching fact for allow("Mallory", "billing:read").

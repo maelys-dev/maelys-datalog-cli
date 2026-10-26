@@ -1,0 +1,9 @@
+Le fait n’est pas déduit : can_deliver("Mallory").
+
+La règle 1 ne peut pas déduire allow("Mallory", "billing:read").
+  Avec Resource = "billing:read", U = "Mallory".
+  Aucun fait ne correspond à right("Mallory", "billing:read").
+
+La règle 2 ne peut pas déduire can_deliver("Mallory").
+  Avec U = "Mallory".
+  Aucun fait ne correspond à allow("Mallory", "billing:read").
