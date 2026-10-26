@@ -25,6 +25,11 @@ jobs:
           fi
           test ! -e "$(brew --prefix)/bin/maelys-datalog"
           echo 'Clean runner: CLI and engine SDK absent'
+      - name: Trust the requested Maelys tap and its SDK formula
+        shell: bash
+        run: |
+          brew tap maelys-dev/tap
+          brew trust maelys-dev/tap
       - name: Install the published tap formula
         shell: bash
         run: brew install maelys-dev/tap/maelys-datalog
