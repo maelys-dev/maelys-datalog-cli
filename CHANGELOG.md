@@ -8,6 +8,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
   and program ABI 2, verified by compiling its public headers. Reject older
   versions or incompatible contracts before linking.
 
+- Preserve machine-readable failure causes, reader locations and public SDK
+  diagnostic fields in error.issues and x-datalog.
+
 - Expand the startup-validated help examples for manifests, selected queries,
   structured absence explanations and symbol/integer/boolean terms.
 

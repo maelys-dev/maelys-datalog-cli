@@ -190,6 +190,7 @@ install: check-engine-contract $(BIN)
 	install -m 644 LICENSE CHANGELOG.md docs/cli.md docs/cli-contract.json \
 		docs/specifications/maelys-datalog-domain-v1.md \
 		docs/specifications/maelys-datalog-explanation-v1.md \
+		docs/specifications/maelys-datalog-diagnostics-v1.md \
 		"$(DESTDIR)$(PREFIX)/share/doc/maelys-datalog/"
 
 clean:

@@ -126,6 +126,40 @@ def catalog_examples():
                 assert len(result.get("policies", [])) == 2
 
 
+def diagnostic_details():
+    domain, policy, facts = (FIXTURE / ("rbac." + suffix) for suffix in
+                            ("domain.json", "dl", "facts.dl"))
+    missing = run("solve", "--domain", domain, "--facts", "missing-facts.dl", policy, exit_code=1)
+    assert missing["code"] == "NOT_FOUND"
+    assert missing["issues"][0]["code"] == "DATALOG_FACTS"
+    assert missing["issues"][0]["path"] == "missing-facts.dl"
+    with tempfile.TemporaryDirectory() as directory:
+        bad = pathlib.Path(directory) / 'bad"facts.dl'
+        bad.write_text('request("Leela",).')
+        error = run("solve", "--domain", domain, "--facts", bad, policy, exit_code=1)
+        assert error["issues"][0]["path"] == str(bad)
+        assert error["issues"][0]["code"] == "DATALOG_FACTS"
+        assert error["x-datalog"]["line"] == 1 and error["x-datalog"]["column"] > 0
+        assert error["x-datalog"]["index"] == 0
+        bad_domain = pathlib.Path(directory) / "domain.json"
+        bad_domain.write_text('{')
+        error = run("inspect", "--domain", bad_domain, policy, exit_code=1)
+        assert error["issues"][0]["code"] == "DATALOG_DOMAIN"
+        assert error["issues"][0]["path"] == str(bad_domain)
+    error = run("explain", "--domain", domain, "--facts", facts, "--why", "true",
+                policy, "unknown", '"Leela"', exit_code=1)
+    assert error["code"] == "NOT_FOUND"
+    assert error["issues"][0]["code"] == "DATALOG_QUERY_UNKNOWN"
+    with tempfile.TemporaryDirectory() as directory:
+        source = pathlib.Path(directory) / "bad.dl"
+        source.write_text("allow( :-")
+        error = run("inspect", "--domain", domain, source, exit_code=1)
+        assert error["issues"][0]["code"] == "DATALOG_ENGINE"
+        diagnostic = error["x-datalog"]["diagnostic"]
+        assert diagnostic["code"] and diagnostic["phase"]
+
+
+
 def temporary_file(directory, name, content):
     path = pathlib.Path(directory) / name
     path.write_bytes(content if isinstance(content, bytes) else content.encode())
@@ -566,4 +600,5 @@ if __name__ == "__main__":
     manifest_query_whitelist()
     help_catalog()
     catalog_examples()
+    diagnostic_details()
     print("cli behavior and schemas: PASS")
