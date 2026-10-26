@@ -2,6 +2,7 @@
 #include <maelys/cli.h>
 #include <maelys/datalog.h>
 #include <maelys/datalog_builders.h>
+#include <maelys/datalog_resources.h>
 #include <maelys/datalog_program.h> /* public, read-only program inspection */
 
 #include "reader.h"
@@ -305,7 +306,7 @@ static int policy_load(maelys_cli_context_t *context, state_t *state,
 }
 
 static int make_session(maelys_cli_context_t *context, state_t *state,
-                        size_t index, int explanations) {
+                        size_t index, unsigned explanations, int inspection) {
     maelys_datalog_session_config_t *config = NULL;
     uint64_t work_limit = 0;
     int unsupported_work_limit = 0;
@@ -316,7 +317,16 @@ static int make_session(maelys_cli_context_t *context, state_t *state,
     }
     if (rc == MAELYS_DATALOG_STATUS_OK && explanations)
         rc = maelys_datalog_session_config_set_explanation_workspace(
-            config, MAELYS_DATALOG_EXPLAIN_TRUE | MAELYS_DATALOG_EXPLAIN_FALSE);
+            config, explanations);
+    if (rc == MAELYS_DATALOG_STATUS_OK && inspection) {
+        /* Inspection prepares a program but never solves. Keep program/build
+         * limits intact; only this session's effective fact capacities are zero. */
+        maelys_datalog_session_resource_request_t resources = MAELYS_DATALOG_RESOURCE_REQUEST_INIT;
+        resources.required_features = MAELYS_DATALOG_RESOURCE_SESSION_CAPACITIES;
+        resources.capacity_mask = MAELYS_DATALOG_CAPACITY_INPUT_FACTS |
+                                  MAELYS_DATALOG_CAPACITY_DERIVED_FACTS;
+        rc = maelys_datalog_session_config_set_resources(config, &resources);
+    }
     if (rc == MAELYS_DATALOG_STATUS_OK) {
         rc = maelys_datalog_session_create_configured(state->policy, index,
                                                        config, &state->session);
@@ -444,7 +454,7 @@ static int command_fingerprint(maelys_cli_context_t *context) {
         cleanup(&state); return failure(context, MAELYS_CLI_CODE_UNEXPECTED,
                                         "policy fingerprint unavailable");
     }
-    if (make_session(context, &state, 0u, 0) != 0) { cleanup(&state); return 1; }
+    if (make_session(context, &state, 0u, 0, 0) != 0) { cleanup(&state); return 1; }
     char execution[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
     if (maelys_datalog_session_execution_fingerprint(state.session, execution) !=
         MAELYS_DATALOG_STATUS_OK) {
@@ -471,7 +481,7 @@ static int command_fingerprint(maelys_cli_context_t *context) {
 }
 
 static int solve_common(maelys_cli_context_t *context, state_t *state,
-                        int explanations) {
+                        unsigned explanations) {
     datalog_cli_error_t error = {0};
     if (load_policy(context, state, &error) != 0) return -1;
     const char *facts_path = maelys_cli_option(context, "facts");
@@ -483,7 +493,7 @@ static int solve_common(maelys_cli_context_t *context, state_t *state,
                       MAELYS_CLI_CODE_VALIDATION_FAILED, error.message);
         return -1;
     }
-    if (make_session(context, state, 0u, explanations) != 0) return -1;
+    if (make_session(context, state, 0u, explanations, 0) != 0) return -1;
     maelys_datalog_diagnostic_t diagnostic = MAELYS_DATALOG_DIAGNOSTIC_INIT;
     maelys_datalog_status_t rc = maelys_datalog_session_solve(
         state->session, state->facts.facts, state->facts.count,
@@ -580,7 +590,7 @@ static int command_queries(maelys_cli_context_t *context) {
     /* Inspect one prepared policy at a time. Names are borrowed from the live
      * session; copy them into the buffered output before releasing it. */
     for (size_t i = 0; i < policy_count; ++i) {
-        if (make_session(context, &state, i, 0) != 0) {
+        if (make_session(context, &state, i, 0, 1) != 0) {
             free(human.data); maelys_cli_json_writer_clear(&json);
             cleanup(&state); return 1;
         }
@@ -769,7 +779,10 @@ static int command_solve(maelys_cli_context_t *context) {
 
 static int command_explain(maelys_cli_context_t *context) {
     state_t state = {0};
-    if (solve_common(context, &state, 1) != 0) { cleanup(&state); return 1; }
+    size_t why = 0;
+    (void)maelys_cli_option_choice(context, "why", &why);
+    unsigned kind = why == 0u ? MAELYS_DATALOG_EXPLAIN_TRUE : MAELYS_DATALOG_EXPLAIN_FALSE;
+    if (solve_common(context, &state, kind) != 0) { cleanup(&state); return 1; }
     const char *name = maelys_cli_operand(context, 1u);
     const maelys_datalog_predicate_t *predicate = query_predicate(&state.domains[0], name);
     if (!predicate) {
@@ -803,8 +816,6 @@ static int command_explain(maelys_cli_context_t *context) {
         state.result, predicate->name, terms, term_count, &present);
     size_t required = 0;
     char *document = NULL;
-    size_t why = 0;
-    (void)maelys_cli_option_choice(context, "why", &why);
     if (rc == MAELYS_DATALOG_STATUS_OK) {
         if (why == 0u) rc = maelys_datalog_result_explain_true_text(
             state.result, predicate->name, terms, term_count, NULL, 0u, &required);
