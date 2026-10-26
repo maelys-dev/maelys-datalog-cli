@@ -1,0 +1,23 @@
+{
+  "code": "NOT_FOUND",
+  "message": "query symbol absent from the result",
+  "hint": "query a symbol the result contains",
+  "issues": [
+    {
+      "code": "DATALOG_ENGINE",
+      "message": "query symbol absent from the result"
+    }
+  ],
+  "x-datalog": {
+    "diagnostic": {
+      "code": "operation_rejected",
+      "message": "query symbol absent from the result",
+      "phase": "explanation",
+      "status": "not_found",
+      "source": 2,
+      "present": 2,
+      "hint": "query a symbol the result contains",
+      "predicate": "can_deliver"
+    }
+  }
+}

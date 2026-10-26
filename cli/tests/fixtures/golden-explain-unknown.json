@@ -1,0 +1,11 @@
+{
+  "code": "NOT_FOUND",
+  "message": "unknown or non-query predicate",
+  "issues": [
+    {
+      "code": "DATALOG_QUERY_UNKNOWN",
+      "message": "unknown or non-query predicate"
+    }
+  ],
+  "x-datalog": {}
+}

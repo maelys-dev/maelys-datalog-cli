@@ -4,5 +4,121 @@
   "predicate": "can_deliver",
   "present": false,
   "why": "false",
-  "document": "MAELYS-DATALOG-v2\ndocument=why-false\nstatus=complete\nquery=\"can_deliver\"(\"Mallory\") origin=none\nsummary=none\nlimit-hits=none candidate-rules=2 substitutions=0 diagnostics=2 filter-cost=0\ndiagnostic=0 rule=1 depth=1 target=\"allow\"(\"Mallory\",\"billing:read\")\nbinding=17 value=\"billing:read\"\nbinding=20 value=\"Mallory\"\nobstacle=positive-no-match body=0 origin=none pattern=\"right\"(\"Mallory\",\"billing:read\")\ndiagnostic=1 rule=2 depth=0 target=\"can_deliver\"(\"Mallory\")\nbinding=20 value=\"Mallory\"\nobstacle=positive-no-match body=0 origin=none pattern=\"allow\"(\"Mallory\",\"billing:read\")\n"
+  "document": "MAELYS-DATALOG-v2\ndocument=why-false\nstatus=complete\nquery=\"can_deliver\"(\"Mallory\") origin=none\nsummary=none\nlimit-hits=none candidate-rules=2 substitutions=0 diagnostics=2 filter-cost=0\ndiagnostic=0 rule=1 depth=1 target=\"allow\"(\"Mallory\",\"billing:read\")\nbinding=17 value=\"billing:read\"\nbinding=20 value=\"Mallory\"\nobstacle=positive-no-match body=0 origin=none pattern=\"right\"(\"Mallory\",\"billing:read\")\ndiagnostic=1 rule=2 depth=0 target=\"can_deliver\"(\"Mallory\")\nbinding=20 value=\"Mallory\"\nobstacle=positive-no-match body=0 origin=none pattern=\"allow\"(\"Mallory\",\"billing:read\")\n",
+  "structure": {
+    "kind": "why-false",
+    "found": false,
+    "truncated": false,
+    "status": "complete",
+    "summary": "none",
+    "limits": [],
+    "query": {
+      "predicate": "can_deliver",
+      "terms": [
+        {
+          "kind": "symbol",
+          "value": "Mallory"
+        }
+      ]
+    },
+    "queryOrigin": "not-applicable",
+    "candidateRuleCount": 2,
+    "substitutionCount": 0,
+    "filterCostUnits": 0,
+    "limitHits": 0,
+    "steps": [],
+    "obstacles": [
+      {
+        "ruleId": 1,
+        "depth": 1,
+        "target": {
+          "predicate": "allow",
+          "terms": [
+            {
+              "kind": "symbol",
+              "value": "Mallory"
+            },
+            {
+              "kind": "symbol",
+              "value": "billing:read"
+            }
+          ]
+        },
+        "kind": "positive-no-match",
+        "origin": "not-applicable",
+        "bodyIndex": 0,
+        "unboundTermMask": 0,
+        "pattern": {
+          "predicate": "right",
+          "terms": [
+            {
+              "kind": "symbol",
+              "value": "Mallory"
+            },
+            {
+              "kind": "symbol",
+              "value": "billing:read"
+            }
+          ]
+        },
+        "bindings": [
+          {
+            "variable": 17,
+            "value": {
+              "kind": "symbol",
+              "value": "billing:read"
+            }
+          },
+          {
+            "variable": 20,
+            "value": {
+              "kind": "symbol",
+              "value": "Mallory"
+            }
+          }
+        ],
+        "supports": []
+      },
+      {
+        "ruleId": 2,
+        "depth": 0,
+        "target": {
+          "predicate": "can_deliver",
+          "terms": [
+            {
+              "kind": "symbol",
+              "value": "Mallory"
+            }
+          ]
+        },
+        "kind": "positive-no-match",
+        "origin": "not-applicable",
+        "bodyIndex": 0,
+        "unboundTermMask": 0,
+        "pattern": {
+          "predicate": "allow",
+          "terms": [
+            {
+              "kind": "symbol",
+              "value": "Mallory"
+            },
+            {
+              "kind": "symbol",
+              "value": "billing:read"
+            }
+          ]
+        },
+        "bindings": [
+          {
+            "variable": 20,
+            "value": {
+              "kind": "symbol",
+              "value": "Mallory"
+            }
+          }
+        ],
+        "supports": []
+      }
+    ]
+  }
 }

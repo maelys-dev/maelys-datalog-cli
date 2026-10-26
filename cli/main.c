@@ -60,7 +60,8 @@ static int detailed_failure(maelys_cli_context_t *context, const char *code,
     const char *cause, const char *message, const char *path,
     const datalog_cli_error_t *reader, const maelys_datalog_diagnostic_t *diagnostic) {
     maelys_cli_error_t error = {0};
-    maelys_cli_error_set(&error, code, NULL, "%s", message);
+    maelys_cli_error_set(&error, code,
+        diagnostic && diagnostic->hint[0] ? diagnostic->hint : NULL, "%s", message);
     maelys_cli_json_writer_t issues, extensions;
     maelys_cli_json_writer_init(&issues);
     maelys_cli_json_writer_init(&extensions);
@@ -106,7 +107,8 @@ static int status_failure(maelys_cli_context_t *context,
                           maelys_datalog_status_t status,
                           const maelys_datalog_diagnostic_t *diagnostic) {
     const char *message = diagnostic && diagnostic->message[0]
-        ? diagnostic->message : maelys_datalog_status_name(status);
+        ? diagnostic->message : status == MAELYS_DATALOG_STATUS_NOT_FOUND
+        ? "requested SDK object was not found" : maelys_datalog_status_name(status);
     const char *code = status == MAELYS_DATALOG_STATUS_NOT_FOUND
         ? MAELYS_CLI_CODE_NOT_FOUND : status == MAELYS_DATALOG_STATUS_UNSUPPORTED
         ? MAELYS_CLI_CODE_UNSUPPORTED : status == MAELYS_DATALOG_STATUS_IO
@@ -921,14 +923,15 @@ static int command_explain(maelys_cli_context_t *context) {
         }
     }
     int present = 0;
+    maelys_datalog_diagnostic_t diagnostic = MAELYS_DATALOG_DIAGNOSTIC_INIT;
     maelys_datalog_status_t rc = maelys_datalog_result_query(
         state.result, predicate->name, terms, term_count, &present);
     size_t required = 0;
     char *document = NULL;
     if (rc == MAELYS_DATALOG_STATUS_OK)
-        rc = maelys_datalog_result_prepare_explanation(state.result,
+        rc = maelys_datalog_result_prepare_explanation_diagnosed(state.result,
             (maelys_datalog_explanation_kind_t)kind, predicate->name, terms, term_count,
-            state.explanation_storage, state.explanation_bytes, &state.explanation);
+            state.explanation_storage, state.explanation_bytes, &state.explanation, &diagnostic);
     if (rc == MAELYS_DATALOG_STATUS_OK)
         rc = maelys_datalog_prepared_explanation_text_size(state.explanation, &required);
     if (rc == MAELYS_DATALOG_STATUS_OK) {
@@ -939,7 +942,7 @@ static int command_explain(maelys_cli_context_t *context) {
         rc = maelys_datalog_prepared_explanation_write_text(state.explanation, document, required + 1u);
     if (rc != MAELYS_DATALOG_STATUS_OK) {
         for (size_t i = 0; i < term_count; ++i) free(owned[i]);
-        free(document); cleanup(&state); return status_failure(context, rc, NULL);
+        free(document); cleanup(&state); return status_failure(context, rc, &diagnostic);
     }
     char policy[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
     char execution[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];

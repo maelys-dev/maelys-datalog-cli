@@ -160,6 +160,34 @@ def diagnostic_details():
 
 
 
+def diagnosed_explanations():
+    domain, policy, facts = (FIXTURE / ("rbac." + suffix) for suffix in
+                            ("domain.json", "dl", "facts.dl"))
+    cases = [("explain-present", "true", "can_deliver", '\"Leela\"', 0),
+             ("explain", "false", "can_deliver", '\"Mallory\"', 0),
+             ("explain-unknown", "true", "unknown", '\"Leela\"', 1),
+             ("explain-unseen", "true", "can_deliver", '\"UnseenSymbol\"', 1),
+             ("explain-unseen", "false", "can_deliver", '\"UnseenSymbol\"', 1)]
+    for name, why, predicate, term, status in cases:
+        args = ("--domain", domain, "--facts", facts, "--why", why, policy, predicate, term)
+        human = text("explain", *args, exit_code=status)
+        assert "[NOT_FOUND] not_found" not in human
+        assert re.sub(r"[0-9a-f]{64}", "<fingerprint>", human) == (FIXTURE / f"golden-{name}.txt").read_text()
+        result = run("explain", *args, exit_code=status)
+        if name == "explain-unseen":
+            diagnostic = result["x-datalog"]["diagnostic"]
+            assert diagnostic["phase"] == "explanation" and diagnostic["predicate"] == predicate
+            assert diagnostic["hint"] == result["hint"] and result["message"] != "not_found"
+        elif name == "explain":
+            assert result["structure"]["obstacles"] and not result["present"]
+        elif name == "explain-present":
+            assert result["present"] and result["structure"]["steps"]
+        for key in ("policyFingerprint", "executionFingerprint"):
+            if key in result:
+                result[key] = "<fingerprint>"
+        assert result == json.loads((FIXTURE / f"golden-{name}.json").read_text())
+
+
 def temporary_file(directory, name, content):
     path = pathlib.Path(directory) / name
     path.write_bytes(content if isinstance(content, bytes) else content.encode())
@@ -226,8 +254,6 @@ def basic():
         for key in ("policyFingerprint", "executionFingerprint"):
             if key in result:
                 result[key] = "<fingerprint>"
-        if command == "explain":
-            result.pop("structure")  # Existing document/envelope fields stay byte-identical.
         assert result == json.loads((FIXTURE / f"golden-{command}.json").read_text())
     assert run("solve", "--domain", domain, "--facts", facts,
                "--query", "missing", policy, exit_code=1)["code"] == "NOT_FOUND"
@@ -601,4 +627,5 @@ if __name__ == "__main__":
     help_catalog()
     catalog_examples()
     diagnostic_details()
+    diagnosed_explanations()
     print("cli behavior and schemas: PASS")

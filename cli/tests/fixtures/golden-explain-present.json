@@ -1,0 +1,117 @@
+{
+  "policyFingerprint": "<fingerprint>",
+  "executionFingerprint": "<fingerprint>",
+  "predicate": "can_deliver",
+  "present": true,
+  "why": "true",
+  "document": "MAELYS-DATALOG-v2\ndocument=why-true\nstatus=complete\nsteps=2 premises=3\nstep=0 rule=1 fact=\"allow\"(\"Leela\",\"billing:read\")\npremise=0 body=0 kind=positive origin=policy-fact fact=\"right\"(\"Leela\",\"billing:read\") parent=-\nstep=1 rule=2 fact=\"can_deliver\"(\"Leela\")\npremise=1 body=0 kind=positive origin=idb fact=\"allow\"(\"Leela\",\"billing:read\") parent=0\npremise=2 body=1 kind=positive origin=edb fact=\"request\"(\"Leela\",\"billing:read\") parent=-\nresult-step=1\n",
+  "structure": {
+    "kind": "why-true",
+    "found": true,
+    "truncated": false,
+    "status": "complete",
+    "query": {
+      "predicate": "can_deliver",
+      "terms": [
+        {
+          "kind": "symbol",
+          "value": "Leela"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "index": 0,
+        "ruleId": 1,
+        "fact": {
+          "predicate": "allow",
+          "terms": [
+            {
+              "kind": "symbol",
+              "value": "Leela"
+            },
+            {
+              "kind": "symbol",
+              "value": "billing:read"
+            }
+          ]
+        },
+        "premises": [
+          {
+            "kind": "positive-fact",
+            "origin": "policy-fact",
+            "bodyIndex": 0,
+            "parentStep": null,
+            "atom": {
+              "predicate": "right",
+              "terms": [
+                {
+                  "kind": "symbol",
+                  "value": "Leela"
+                },
+                {
+                  "kind": "symbol",
+                  "value": "billing:read"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "ruleId": 2,
+        "fact": {
+          "predicate": "can_deliver",
+          "terms": [
+            {
+              "kind": "symbol",
+              "value": "Leela"
+            }
+          ]
+        },
+        "premises": [
+          {
+            "kind": "positive-fact",
+            "origin": "idb",
+            "bodyIndex": 0,
+            "parentStep": 0,
+            "atom": {
+              "predicate": "allow",
+              "terms": [
+                {
+                  "kind": "symbol",
+                  "value": "Leela"
+                },
+                {
+                  "kind": "symbol",
+                  "value": "billing:read"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "positive-fact",
+            "origin": "edb",
+            "bodyIndex": 1,
+            "parentStep": null,
+            "atom": {
+              "predicate": "request",
+              "terms": [
+                {
+                  "kind": "symbol",
+                  "value": "Leela"
+                },
+                {
+                  "kind": "symbol",
+                  "value": "billing:read"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "obstacles": []
+  }
+}

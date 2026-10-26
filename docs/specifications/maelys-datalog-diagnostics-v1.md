@@ -28,3 +28,9 @@ operational failure. Textual engine explanation documents remain unchanged.
 Messages are human descriptions, not identifiers to parse; use issue codes and
 structured fields. JSON strings, including paths containing quotes, are escaped
 by the framework writer. These conversions allocate in the CLI.
+
+Explanation preparation uses the diagnosed public SDK entry point. Its failure
+message and hint are rendered in text; JSON retains the canonical message and
+hint plus `error["x-datalog"].diagnostic`, including phase and predicate. An
+unseen symbol is distinct from a known fact that is absent: the former is an
+operational error; the latter can carry a successful Why-false obstacle report.
