@@ -360,7 +360,7 @@
               {
                 "name": "POLICY",
                 "required": false,
-                "summary": "Inline policy source file.",
+                "summary": "Datalog source file; omit only with --manifest. Example paths are relative to the maelys-datalog-cli source checkout.",
                 "variadic": false
               }
             ],
@@ -375,7 +375,7 @@
                 "repeatable": true,
                 "required": true,
                 "requires": [],
-                "summary": "Domain JSON declaration."
+                "summary": "JSON file declaring the domain, predicates and atoms."
               },
               {
                 "argument": {
@@ -387,7 +387,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Load a manifest as one policy set."
+                "summary": "Load a policy set instead of POLICY. Repeat --domain for each domain used by the manifest."
               },
               {
                 "argument": {
@@ -399,7 +399,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Inline policy identifier."
+                "summary": "Identifier for the source policy (default: cli)."
               },
               {
                 "conflictsWith": [],
@@ -409,7 +409,7 @@
                 "requires": [
                   "--manifest"
                 ],
-                "summary": "Admit test-only manifest entries."
+                "summary": "Allow manifest entries marked test-only."
               },
               {
                 "conflictsWith": [],
@@ -419,7 +419,7 @@
                 "requires": [
                   "--manifest"
                 ],
-                "summary": "Admit policy-local atoms."
+                "summary": "Allow manifest policies to use atoms absent from the domain declaration."
               }
             ],
             "passthrough": false,
@@ -712,7 +712,7 @@
           "pattern": [
             "check"
           ],
-          "purpose": "Validate a domain and policy; exit 2 reports rejection.",
+          "purpose": "Validate a policy or manifest; exit 2 means semantic rejection.",
           "usage": "check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
         },
         {
@@ -770,7 +770,7 @@
               {
                 "name": "POLICY",
                 "required": false,
-                "summary": "Inline policy source file.",
+                "summary": "Datalog source file; omit only with --manifest. Example paths are relative to the maelys-datalog-cli source checkout.",
                 "variadic": false
               }
             ],
@@ -785,7 +785,7 @@
                 "repeatable": true,
                 "required": true,
                 "requires": [],
-                "summary": "Domain JSON declaration."
+                "summary": "JSON file declaring the domain, predicates and atoms."
               },
               {
                 "argument": {
@@ -797,7 +797,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Load a manifest as one policy set."
+                "summary": "Load a policy set instead of POLICY. Repeat --domain for each domain used by the manifest."
               },
               {
                 "argument": {
@@ -809,7 +809,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Inline policy identifier."
+                "summary": "Identifier for the source policy (default: cli)."
               },
               {
                 "conflictsWith": [],
@@ -819,7 +819,7 @@
                 "requires": [
                   "--manifest"
                 ],
-                "summary": "Admit test-only manifest entries."
+                "summary": "Allow manifest entries marked test-only."
               },
               {
                 "conflictsWith": [],
@@ -829,7 +829,7 @@
                 "requires": [
                   "--manifest"
                 ],
-                "summary": "Admit policy-local atoms."
+                "summary": "Allow manifest policies to use atoms absent from the domain declaration."
               }
             ],
             "passthrough": false,
@@ -990,7 +990,7 @@
           "pattern": [
             "inspect"
           ],
-          "purpose": "Inspect compiled policy counts, limits and authorized queries.",
+          "purpose": "Show compiled policy statistics, limits and authorized queries without solving.",
           "usage": "inspect [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
         },
         {
@@ -1036,7 +1036,7 @@
               {
                 "name": "POLICY",
                 "required": false,
-                "summary": "Inline policy source file.",
+                "summary": "Datalog source file; omit only with --manifest. Example paths are relative to the maelys-datalog-cli source checkout.",
                 "variadic": false
               }
             ],
@@ -1051,7 +1051,7 @@
                 "repeatable": true,
                 "required": true,
                 "requires": [],
-                "summary": "Domain JSON declaration."
+                "summary": "JSON file declaring the domain, predicates and atoms."
               },
               {
                 "argument": {
@@ -1063,7 +1063,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Load a manifest as one policy set."
+                "summary": "Load a policy set instead of POLICY. Repeat --domain for each domain used by the manifest."
               },
               {
                 "argument": {
@@ -1075,7 +1075,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Inline policy identifier."
+                "summary": "Identifier for the source policy (default: cli)."
               },
               {
                 "conflictsWith": [],
@@ -1085,7 +1085,7 @@
                 "requires": [
                   "--manifest"
                 ],
-                "summary": "Admit test-only manifest entries."
+                "summary": "Allow manifest entries marked test-only."
               },
               {
                 "conflictsWith": [],
@@ -1095,7 +1095,7 @@
                 "requires": [
                   "--manifest"
                 ],
-                "summary": "Admit policy-local atoms."
+                "summary": "Allow manifest policies to use atoms absent from the domain declaration."
               }
             ],
             "passthrough": false,
@@ -1169,7 +1169,7 @@
           "pattern": [
             "queries"
           ],
-          "purpose": "List each policy's effectively authorized queries.",
+          "purpose": "List the predicates each policy allows you to query.",
           "usage": "queries [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]"
         },
         {
@@ -1177,7 +1177,7 @@
           "effect": "read",
           "examples": [
             {
-              "summary": "Read the RBAC policy and execution identities.",
+              "summary": "Show the RBAC policy and execution fingerprints.",
               "words": [
                 "fingerprint",
                 "--domain",
@@ -1199,8 +1199,8 @@
             "operands": [
               {
                 "name": "POLICY",
-                "required": false,
-                "summary": "Inline policy source file.",
+                "required": true,
+                "summary": "Datalog source file. Example paths are relative to the maelys-datalog-cli source checkout.",
                 "variadic": false
               }
             ],
@@ -1215,7 +1215,7 @@
                 "repeatable": false,
                 "required": true,
                 "requires": [],
-                "summary": "Domain JSON declaration."
+                "summary": "JSON file declaring the domain, predicates and atoms."
               },
               {
                 "argument": {
@@ -1227,7 +1227,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Inline policy identifier."
+                "summary": "Identifier for the source policy (default: cli)."
               },
               {
                 "argument": {
@@ -1240,11 +1240,11 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Cooperative work limit (unsupported by the reference backend)."
+                "summary": "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit."
               }
             ],
             "passthrough": false,
-            "synopsis": "fingerprint [POLICY] --domain FILE [--policy-id ID] [--work-limit N]"
+            "synopsis": "fingerprint POLICY --domain FILE [--policy-id ID] [--work-limit N]"
           },
           "outputMode": "json-envelope",
           "outputSchema": {
@@ -1269,15 +1269,15 @@
           "pattern": [
             "fingerprint"
           ],
-          "purpose": "Read policy and execution identities.",
-          "usage": "fingerprint [POLICY] --domain FILE [--policy-id ID] [--work-limit N]"
+          "purpose": "Show the policy fingerprint and its configured execution fingerprint.",
+          "usage": "fingerprint POLICY --domain FILE [--policy-id ID] [--work-limit N]"
         },
         {
           "available": true,
           "effect": "read",
           "examples": [
             {
-              "summary": "Solve the RBAC policy against the example facts.",
+              "summary": "Evaluate the RBAC policy and list all authorized query results.",
               "words": [
                 "solve",
                 "--domain",
@@ -1288,7 +1288,7 @@
               ]
             },
             {
-              "summary": "Select only the delivery query.",
+              "summary": "Show only can_deliver/1 results.",
               "words": [
                 "solve",
                 "--domain",
@@ -1314,8 +1314,8 @@
             "operands": [
               {
                 "name": "POLICY",
-                "required": false,
-                "summary": "Inline policy source file.",
+                "required": true,
+                "summary": "Datalog source file. Example paths are relative to the maelys-datalog-cli source checkout.",
                 "variadic": false
               }
             ],
@@ -1330,7 +1330,7 @@
                 "repeatable": false,
                 "required": true,
                 "requires": [],
-                "summary": "Domain JSON declaration."
+                "summary": "JSON file declaring the domain, predicates and atoms."
               },
               {
                 "argument": {
@@ -1342,7 +1342,7 @@
                 "repeatable": false,
                 "required": true,
                 "requires": [],
-                "summary": "Closed EDB facts."
+                "summary": "Datalog file containing input facts (EDB); rules are not accepted."
               },
               {
                 "argument": {
@@ -1354,7 +1354,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Inline policy identifier."
+                "summary": "Identifier for the source policy (default: cli)."
               },
               {
                 "argument": {
@@ -1366,7 +1366,7 @@
                 "repeatable": true,
                 "required": false,
                 "requires": [],
-                "summary": "Query a declared predicate."
+                "summary": "Select results by predicate name or name/arity. Repeat to select several; defaults to all authorized queries."
               },
               {
                 "argument": {
@@ -1379,11 +1379,11 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Cooperative work limit (unsupported by the reference backend)."
+                "summary": "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit."
               }
             ],
             "passthrough": false,
-            "synopsis": "solve [POLICY] --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]"
+            "synopsis": "solve POLICY --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]"
           },
           "outputMode": "json-envelope",
           "outputSchema": {
@@ -1592,15 +1592,15 @@
           "pattern": [
             "solve"
           ],
-          "purpose": "Solve an inline policy against one EDB batch.",
-          "usage": "solve [POLICY] --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]"
+          "purpose": "Evaluate a policy with input facts and print query results.",
+          "usage": "solve POLICY --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]"
         },
         {
           "available": true,
           "effect": "read",
           "examples": [
             {
-              "summary": "Explain why Leela can receive a delivery.",
+              "summary": "Explain why can_deliver(\"Leela\") is derived.",
               "words": [
                 "explain",
                 "--domain",
@@ -1615,7 +1615,7 @@
               ]
             },
             {
-              "summary": "Read a structured explanation of an absent delivery permission.",
+              "summary": "Explain why can_deliver(\"Mallory\") is absent, as JSON with text and typed structure.",
               "words": [
                 "explain",
                 "--domain",
@@ -1632,7 +1632,7 @@
               ]
             },
             {
-              "summary": "Explain a symbol query; preserve its inner quotes as one shell argument.",
+              "summary": "Query the symbol \"Leela\"; keep its double quotes inside one shell argument.",
               "words": [
                 "explain",
                 "--domain",
@@ -1691,19 +1691,19 @@
               {
                 "name": "POLICY",
                 "required": true,
-                "summary": "Inline policy source file.",
+                "summary": "Datalog source file. Example paths are relative to the maelys-datalog-cli source checkout.",
                 "variadic": false
               },
               {
                 "name": "PREDICATE",
                 "required": true,
-                "summary": "Queryable predicate name.",
+                "summary": "Authorized predicate name, optionally followed by /ARITY.",
                 "variadic": false
               },
               {
                 "name": "TERMS",
                 "required": false,
-                "summary": "Typed query terms: 3, true or quoted symbol.",
+                "summary": "One argument per term: an int64, true, false or a double-quoted symbol. Preserve the symbol quotes with shell quoting, e.g. '\"Leela\"'. Omit terms only for a predicate of arity zero.",
                 "variadic": true
               }
             ],
@@ -1718,7 +1718,7 @@
                 "repeatable": false,
                 "required": true,
                 "requires": [],
-                "summary": "Domain JSON declaration."
+                "summary": "JSON file declaring the domain, predicates and atoms."
               },
               {
                 "argument": {
@@ -1730,7 +1730,7 @@
                 "repeatable": false,
                 "required": true,
                 "requires": [],
-                "summary": "Closed EDB facts."
+                "summary": "Datalog file containing input facts (EDB); rules are not accepted."
               },
               {
                 "argument": {
@@ -1746,7 +1746,7 @@
                 "repeatable": false,
                 "required": true,
                 "requires": [],
-                "summary": "Explain presence or absence."
+                "summary": "true: explain a derivation; false: explain an absent fact. Use --format json for the text document and typed structure."
               },
               {
                 "argument": {
@@ -1758,7 +1758,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Inline policy identifier."
+                "summary": "Identifier for the source policy (default: cli)."
               },
               {
                 "argument": {
@@ -1771,7 +1771,7 @@
                 "repeatable": false,
                 "required": false,
                 "requires": [],
-                "summary": "Cooperative work limit (unsupported by the reference backend)."
+                "summary": "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit."
               }
             ],
             "passthrough": false,
@@ -2357,7 +2357,7 @@
           "pattern": [
             "explain"
           ],
-          "purpose": "Explain a typed query against a solved policy.",
+          "purpose": "Evaluate a policy and explain why a fact is present or absent.",
           "usage": "explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true|false [--policy-id ID] [--work-limit N]"
         }
       ],
@@ -2528,54 +2528,55 @@
       "product": "Maelys Datalog",
       "program": "maelys-datalog",
       "schemaVersion": 1,
-      "x-maelys-summary": "Validate, solve and explain bounded Datalog policies.",
+      "x-maelys-summary": "Validate Datalog policies, query facts and explain results.",
       "x-maelys-translations": {
         "canonical": "en",
         "languages": {
           "fr": {
             "  %zu predicates, %zu policy facts, %zu rules\n  program limits: input=%zu, derived=%zu, per predicate=%zu\n  inspection capacity: input=%zu, derived=%zu, symbols=%zu, text bytes=%zu\n": "  %zu pr\u00e9dicats, %zu faits de politique, %zu r\u00e8gles\n  limites du programme : entr\u00e9e=%zu, d\u00e9riv\u00e9s=%zu, par pr\u00e9dicat=%zu\n  capacit\u00e9s d\u2019inspection : entr\u00e9e=%zu, d\u00e9riv\u00e9s=%zu, symboles=%zu, octets de texte=%zu\n",
             "  (no authorized queries)\n": "  (aucune requ\u00eate autoris\u00e9e)\n",
+            "  (none)\n": "  (aucun fait)\n",
             " (domain ": " (domaine ",
             "%s/%zu (%zu facts):\n": "%s/%zu (%zu faits) :\n",
             "--manifest conflicts with an inline policy operand or --policy-id": "--manifest est incompatible avec une politique autonome ou --policy-id",
             "--work-limit requires WORK_LIMIT capability; the reference backend does not support a nonzero work limit": "--work-limit n\u00e9cessite la capacit\u00e9 WORK_LIMIT ; le backend de r\u00e9f\u00e9rence ne prend pas en charge une limite non nulle",
-            "Admit policy-local atoms.": "Admettre les atomes locaux aux politiques.",
-            "Admit test-only manifest entries.": "Admettre les entr\u00e9es du manifeste r\u00e9serv\u00e9es aux tests.",
-            "Closed EDB facts.": "Faits EDB du lot ferm\u00e9.",
-            "Cooperative work limit (unsupported by the reference backend).": "Limite coop\u00e9rative de travail (non prise en charge par le backend de r\u00e9f\u00e9rence).",
-            "Domain JSON declaration.": "D\u00e9claration JSON du domaine.",
+            "Allow manifest entries marked test-only.": "Autoriser les entr\u00e9es du manifeste marqu\u00e9es comme r\u00e9serv\u00e9es aux tests.",
+            "Allow manifest policies to use atoms absent from the domain declaration.": "Autoriser les politiques du manifeste \u00e0 utiliser des atomes absents de la d\u00e9claration du domaine.",
+            "Authorized predicate name, optionally followed by /ARITY.": "Nom d\u2019un pr\u00e9dicat autoris\u00e9, \u00e9ventuellement suivi de /ARITY.",
+            "Datalog file containing input facts (EDB); rules are not accepted.": "Fichier Datalog contenant les faits d\u2019entr\u00e9e (EDB) ; les r\u00e8gles ne sont pas accept\u00e9es.",
+            "Datalog source file. Example paths are relative to the maelys-datalog-cli source checkout.": "Fichier source Datalog. Les chemins des exemples sont relatifs \u00e0 la racine du d\u00e9p\u00f4t maelys-datalog-cli.",
+            "Datalog source file; omit only with --manifest. Example paths are relative to the maelys-datalog-cli source checkout.": "Fichier source Datalog ; \u00e0 omettre uniquement avec --manifest. Les chemins des exemples sont relatifs \u00e0 la racine du d\u00e9p\u00f4t maelys-datalog-cli.",
+            "Evaluate a policy and explain why a fact is present or absent.": "\u00c9valuer une politique et expliquer pourquoi un fait est pr\u00e9sent ou absent.",
+            "Evaluate a policy with input facts and print query results.": "\u00c9valuer une politique avec les faits fournis et afficher les r\u00e9sultats des requ\u00eates.",
+            "Evaluate the RBAC policy and list all authorized query results.": "\u00c9valuer la politique RBAC et lister les r\u00e9sultats de toutes les requ\u00eates autoris\u00e9es.",
             "Explain a boolean query.": "Expliquer une requ\u00eate avec un bool\u00e9en.",
-            "Explain a symbol query; preserve its inner quotes as one shell argument.": "Expliquer une requ\u00eate avec un symbole ; conserver ses guillemets internes dans un seul argument du shell.",
-            "Explain a typed query against a solved policy.": "Expliquer une requ\u00eate typ\u00e9e sur une politique r\u00e9solue.",
             "Explain an integer query.": "Expliquer une requ\u00eate avec un entier.",
-            "Explain presence or absence.": "Expliquer la pr\u00e9sence ou l\u2019absence.",
-            "Explain why Leela can receive a delivery.": "Expliquer pourquoi Leela peut recevoir une livraison.",
-            "Inline policy identifier.": "Identifiant de la politique autonome.",
-            "Inline policy source file.": "Fichier source de la politique autonome.",
-            "Inspect compiled policy counts, limits and authorized queries.": "Inspecter les comptes, les limites et les requ\u00eates autoris\u00e9es des politiques compil\u00e9es.",
+            "Explain why can_deliver(\"Leela\") is derived.": "Expliquer pourquoi can_deliver(\"Leela\") est d\u00e9duit.",
+            "Explain why can_deliver(\"Mallory\") is absent, as JSON with text and typed structure.": "Expliquer l\u2019absence de can_deliver(\"Mallory\") en JSON, avec le texte et la structure typ\u00e9e.",
+            "Identifier for the source policy (default: cli).": "Identifiant de la politique source (par d\u00e9faut : cli).",
             "Inspect the RBAC compiled policy and its authorized queries.": "Inspecter la politique RBAC compil\u00e9e et ses requ\u00eates autoris\u00e9es.",
             "Inspect the enabled policies of a multi-domain manifest.": "Inspecter les politiques actives d\u2019un manifeste multi-domaines.",
-            "List each policy's effectively authorized queries.": "Lister les requ\u00eates effectivement autoris\u00e9es de chaque politique.",
+            "JSON file declaring the domain, predicates and atoms.": "Fichier JSON d\u00e9clarant le domaine, ses pr\u00e9dicats et ses atomes.",
             "List the RBAC policy authorized queries.": "Lister les requ\u00eates autoris\u00e9es de la politique RBAC.",
-            "Load a manifest as one policy set.": "Charger un manifeste comme un ensemble de politiques.",
+            "List the predicates each policy allows you to query.": "Lister les pr\u00e9dicats que chaque politique autorise \u00e0 interroger.",
+            "Load a policy set instead of POLICY. Repeat --domain for each domain used by the manifest.": "Charger un ensemble de politiques \u00e0 la place de POLICY. R\u00e9p\u00e9ter --domain pour chaque domaine utilis\u00e9 par le manifeste.",
             "NUL byte in policy source": "octet NUL dans la source de la politique",
             "No enabled policies.\n": "Aucune politique active.\n",
             "No query predicates declared.\n": "Aucun pr\u00e9dicat interrogeable d\u00e9clar\u00e9.\n",
+            "One argument per term: an int64, true, false or a double-quoted symbol. Preserve the symbol quotes with shell quoting, e.g. '\"Leela\"'. Omit terms only for a predicate of arity zero.": "Un argument par terme : entier int64, true, false ou symbole entre guillemets doubles. Prot\u00e9ger ces guillemets dans le shell, par exemple '\"Leela\"'. Omettre les termes uniquement pour un pr\u00e9dicat d\u2019arit\u00e9 z\u00e9ro.",
             "Policy valid.": "Politique valide.",
-            "Query a declared predicate.": "Interroger un pr\u00e9dicat d\u00e9clar\u00e9.",
-            "Queryable predicate name.": "Nom du pr\u00e9dicat interrogeable.",
-            "Read a structured explanation of an absent delivery permission.": "Lire l\u2019explication structur\u00e9e d\u2019une permission de livraison absente.",
-            "Read policy and execution identities.": "Lire les identit\u00e9s de la politique et de son ex\u00e9cution.",
-            "Read the RBAC policy and execution identities.": "Lire les identit\u00e9s de la politique RBAC et de son ex\u00e9cution.",
-            "Select only the delivery query.": "S\u00e9lectionner uniquement la requ\u00eate de livraison.",
-            "Solve an inline policy against one EDB batch.": "R\u00e9soudre une politique autonome sur un lot de faits EDB.",
-            "Solve the RBAC policy against the example facts.": "R\u00e9soudre la politique RBAC sur les faits d\u2019exemple.",
-            "Typed query terms: 3, true or quoted symbol.": "Termes typ\u00e9s de la requ\u00eate : 3, true ou symbole entre guillemets.",
+            "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit.": "Budget coop\u00e9ratif de travail strictement positif, non pris en charge par le backend de r\u00e9f\u00e9rence. Omettre cette option pour ne pas fixer de limite.",
+            "Query the symbol \"Leela\"; keep its double quotes inside one shell argument.": "Interroger le symbole \"Leela\" ; conserver ses guillemets doubles dans un seul argument du shell.",
+            "Select results by predicate name or name/arity. Repeat to select several; defaults to all authorized queries.": "S\u00e9lectionner les r\u00e9sultats par nom de pr\u00e9dicat ou nom/arit\u00e9. R\u00e9p\u00e9ter pour en s\u00e9lectionner plusieurs ; par d\u00e9faut, toutes les requ\u00eates autoris\u00e9es.",
+            "Show compiled policy statistics, limits and authorized queries without solving.": "Afficher les statistiques, les limites et les requ\u00eates autoris\u00e9es des politiques compil\u00e9es, sans les ex\u00e9cuter.",
+            "Show only can_deliver/1 results.": "Afficher uniquement les r\u00e9sultats de can_deliver/1.",
+            "Show the RBAC policy and execution fingerprints.": "Afficher les empreintes de la politique RBAC et de son ex\u00e9cution.",
+            "Show the policy fingerprint and its configured execution fingerprint.": "Afficher les empreintes de la politique et de sa configuration d\u2019ex\u00e9cution.",
             "Unable to serialize diagnostic details.": "Impossible de s\u00e9rialiser les d\u00e9tails du diagnostic.",
-            "Validate a domain and policy; exit 2 reports rejection.": "Valider un domaine et une politique ; la sortie 2 indique un rejet.",
+            "Validate Datalog policies, query facts and explain results.": "Valider des politiques Datalog, interroger les faits et expliquer les r\u00e9sultats.",
             "Validate a manifest with two domains.": "Valider un manifeste avec deux domaines.",
+            "Validate a policy or manifest; exit 2 means semantic rejection.": "Valider une politique ou un manifeste ; le code de sortie 2 indique un rejet s\u00e9mantique.",
             "Validate the RBAC policy and its domain.": "Valider la politique RBAC et son domaine.",
-            "Validate, solve and explain bounded Datalog policies.": "Valider, r\u00e9soudre et expliquer des politiques Datalog born\u00e9es.",
             "at least one --domain is required": "au moins un --domain est requis",
             "cannot open facts: %s": "impossible d\u2019ouvrir les faits : %s",
             "cannot read EDB fact limit": "impossible de lire la limite des faits EDB",
@@ -2627,6 +2628,7 @@
             "query term count differs from predicate arity": "le nombre de termes diff\u00e8re de l\u2019arit\u00e9 du pr\u00e9dicat",
             "requested SDK object was not found": "l\u2019objet demand\u00e9 au SDK est introuvable",
             "result introspection failed": "\u00e9chec de l\u2019introspection du r\u00e9sultat",
+            "true: explain a derivation; false: explain an absent fact. Use --format json for the text document and typed structure.": "true : expliquer une d\u00e9rivation ; false : expliquer l\u2019absence d\u2019un fait. Utiliser --format json pour obtenir le document textuel et la structure typ\u00e9e.",
             "unknown or non-query predicate": "pr\u00e9dicat inconnu ou non interrogeable",
             "unknown predicate role": "r\u00f4le de pr\u00e9dicat inconnu",
             "unsupported domain format": "format de domaine non pris en charge",

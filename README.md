@@ -3,13 +3,18 @@
 `maelys-datalog` is a command-line consumer of the public Maelys Datalog SDK.
 It validates policies and domains, reports fingerprints, solves a batch of
 facts, and renders Why-true or Why-false explanations. The engine is a pinned
-dependency at the v0.22.0 compatibility freeze; this repository does not contain or modify its sources.
+dependency pinned by tag and commit in `dependencies/maelys-datalog.pin`,
+following the compatibility freeze introduced in v0.22.0; this repository does not contain or modify its sources.
 
 The command follows [agent-cli/v2](docs/cli.md). Run
 `maelys-datalog describe --summary --format json` for its machine-readable
 catalog. JSON explanations also include a [typed structure](docs/specifications/maelys-datalog-explanation-v1.md)
 while preserving their text document. The [domain declaration](docs/specifications/maelys-datalog-domain-v1.md)
 is a strict JSON file parsed with `maelys-json`.
+
+The examples below and in `help COMMAND` use paths relative to the root of the
+CLI source checkout. Homebrew does not install these test fixtures; use your own
+domain, policy and fact files when working outside that checkout.
 
 ```sh
 maelys-datalog check --domain cli/tests/fixtures/rbac.domain.json \
@@ -23,7 +28,7 @@ maelys-datalog explain --domain cli/tests/fixtures/rbac.domain.json \
   cli/tests/fixtures/rbac.dl can_deliver '"Mallory"' --format json
 ```
 
-`check` and `queries` also accept `--manifest FILE` and repeated `--domain`
+`check`, `inspect` and `queries` also accept `--manifest FILE` and repeated `--domain`
 declarations for multi-domain policy sets. `check` reports each enabled policy's
 identifier and normalized rule count. A manifest with no enabled policies is
 valid and reports zero policies and the SDK's deterministic policy fingerprint,
@@ -88,8 +93,11 @@ for a documentation site; neither rendering is maintained by hand.
 
 Human help and CLI diagnostics support `--lang fr`, `MAELYS_CLI_LANG` and locale
 selection. English remains canonical; JSON identifiers, messages and structured
-data retain their canonical bytes. Known explanation diagnostic messages and hints are translated for human text;
-the SDK diagnostic in JSON and engine explanation documents are preserved verbatim. Both English and French manuals are installed.
+data retain their canonical bytes (the rendered `help` text follows the selected
+language, including inside a JSON envelope). Known explanation diagnostic
+messages and hints are translated for human text; the SDK diagnostic in JSON
+and engine explanation documents are preserved verbatim. Both English and French
+manuals are installed.
 
 `make invocation-check` runs the pinned contract's catalog-generated invocation
 campaign, also included in `make check`: fixed boundary cases plus eight generated

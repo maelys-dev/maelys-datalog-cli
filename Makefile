@@ -185,16 +185,16 @@ sdk-compatibility-check:
 	CC="$(CC)" python3 cli/tests/test_installed_sdk.py
 
 .PHONY: man-check manual-mdx
-$(MAN): $(BIN) CHANGELOG.md $(CLI_DIR)/tools/maelys-cli-man
+$(MAN): $(BIN) CHANGELOG.md scripts/manual-date.py $(CLI_DIR)/tools/maelys-cli-man
 	@mkdir -p $(dir $@)
-	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" $(abspath $(BIN)) > $@
+	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" $(abspath $(BIN)) > $@.tmp && mv $@.tmp $@
 
-$(FR_MAN): $(BIN) CHANGELOG.md $(CLI_DIR)/tools/maelys-cli-man
+$(FR_MAN): $(BIN) CHANGELOG.md scripts/manual-date.py $(CLI_DIR)/tools/maelys-cli-man
 	@mkdir -p $(dir $@)
-	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" --lang fr $(abspath $(BIN)) > $@
+	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" --lang fr $(abspath $(BIN)) > $@.tmp && mv $@.tmp $@
 
 man-check: $(MAN) $(FR_MAN)
-	python3 cli/tests/test_manual.py "$(CLI_DIR)/tools/maelys-cli-man" $(abspath $(BIN)) $(MAN) "$(MAN_DATE)"
+	python3 cli/tests/test_manual.py "$(CLI_DIR)/tools/maelys-cli-man" $(abspath $(BIN)) $(MAN) $(FR_MAN) "$(MAN_DATE)"
 
 manual-mdx: $(BIN)
 	@mkdir -p $(BUILD_DIR)/man

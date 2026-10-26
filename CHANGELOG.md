@@ -14,6 +14,11 @@ All notable changes to `maelys-datalog-cli` are documented here.
   and program ABI 2, verified by compiling its public headers. Reject older
   versions or incompatible contracts before linking.
 
+- Clarify English and French help, required source operands and example paths;
+  translate empty query results and verify the generated French manual file.
+  Regenerate manuals when their date helper changes and preserve the last
+  complete page if rendering fails.
+
 - Include bounded catalog-generated invocation tests in make check, separately
   from the conformance kit and executable product examples.
 

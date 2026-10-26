@@ -846,7 +846,7 @@ static int command_solve(maelys_cli_context_t *context) {
         if (heading_length < 0 || (size_t)heading_length >= sizeof(heading))
             human.failed = 1;
         else human_appendn(&human, heading, (size_t)heading_length);
-        if (!count) human_append(&human, "  (none)\n");
+        if (!count) human_append(&human, human_translation(context, "  (none)\n"));
         (void)maelys_cli_json_begin_object(&json);
         (void)maelys_cli_json_key_string(&json, "predicate", p->name);
         (void)maelys_cli_json_key_unsigned(&json, "arity", (uint64_t)p->arity);
@@ -1001,38 +1001,41 @@ static int command_explain(maelys_cli_context_t *context) {
 
 static const char *const why_choices[] = {"true", "false", NULL};
 static const maelys_cli_operand_t policy_operand[] = {
-    {MAELYS_CLI_OPERAND_OPTIONAL("POLICY", "Inline policy source file.")},
+    {MAELYS_CLI_OPERAND_OPTIONAL("POLICY", "Datalog source file; omit only with --manifest. Example paths are relative to the maelys-datalog-cli source checkout.")},
+};
+static const maelys_cli_operand_t source_operand[] = {
+    {MAELYS_CLI_OPERAND("POLICY", "Datalog source file. Example paths are relative to the maelys-datalog-cli source checkout.")},
 };
 static const maelys_cli_operand_t explain_operands[] = {
-    {MAELYS_CLI_OPERAND("POLICY", "Inline policy source file.")},
-    {MAELYS_CLI_OPERAND("PREDICATE", "Queryable predicate name.")},
-    {MAELYS_CLI_OPERAND_REST("TERMS", "Typed query terms: 3, true or quoted symbol.")},
+    {MAELYS_CLI_OPERAND("POLICY", "Datalog source file. Example paths are relative to the maelys-datalog-cli source checkout.")},
+    {MAELYS_CLI_OPERAND("PREDICATE", "Authorized predicate name, optionally followed by /ARITY.")},
+    {MAELYS_CLI_OPERAND_REST("TERMS", "One argument per term: an int64, true, false or a double-quoted symbol. Preserve the symbol quotes with shell quoting, e.g. '\"Leela\"'. Omit terms only for a predicate of arity zero.")},
 };
 static const maelys_cli_option_t policy_options[] = {
-    {MAELYS_CLI_PATH("domain", "FILE", "Domain JSON declaration."), .required = 1, .repeatable = 1},
-    {MAELYS_CLI_PATH("manifest", "FILE", "Load a manifest as one policy set.")},
-    {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
-    {MAELYS_CLI_FLAG("allow-test-only", "Admit test-only manifest entries."), .depends_on = "manifest"},
-    {MAELYS_CLI_FLAG("allow-undeclared-policy-atoms", "Admit policy-local atoms."), .depends_on = "manifest"},
+    {MAELYS_CLI_PATH("domain", "FILE", "JSON file declaring the domain, predicates and atoms."), .required = 1, .repeatable = 1},
+    {MAELYS_CLI_PATH("manifest", "FILE", "Load a policy set instead of POLICY. Repeat --domain for each domain used by the manifest.")},
+    {MAELYS_CLI_STRING("policy-id", "ID", "Identifier for the source policy (default: cli).")},
+    {MAELYS_CLI_FLAG("allow-test-only", "Allow manifest entries marked test-only."), .depends_on = "manifest"},
+    {MAELYS_CLI_FLAG("allow-undeclared-policy-atoms", "Allow manifest policies to use atoms absent from the domain declaration."), .depends_on = "manifest"},
 };
 static const maelys_cli_option_t fingerprint_options[] = {
-    {MAELYS_CLI_PATH("domain", "FILE", "Domain JSON declaration."), .required = 1},
-    {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
-    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit (unsupported by the reference backend).", 1u, 0u)},
+    {MAELYS_CLI_PATH("domain", "FILE", "JSON file declaring the domain, predicates and atoms."), .required = 1},
+    {MAELYS_CLI_STRING("policy-id", "ID", "Identifier for the source policy (default: cli).")},
+    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit.", 1u, 0u)},
 };
 static const maelys_cli_option_t solve_options[] = {
-    {MAELYS_CLI_PATH("domain", "FILE", "Domain JSON declaration."), .required = 1},
-    {MAELYS_CLI_PATH("facts", "FILE", "Closed EDB facts."), .required = 1},
-    {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
-    {MAELYS_CLI_STRING("query", "PRED[/ARITY]", "Query a declared predicate."), .repeatable = 1},
-    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit (unsupported by the reference backend).", 1u, 0u)},
+    {MAELYS_CLI_PATH("domain", "FILE", "JSON file declaring the domain, predicates and atoms."), .required = 1},
+    {MAELYS_CLI_PATH("facts", "FILE", "Datalog file containing input facts (EDB); rules are not accepted."), .required = 1},
+    {MAELYS_CLI_STRING("policy-id", "ID", "Identifier for the source policy (default: cli).")},
+    {MAELYS_CLI_STRING("query", "PRED[/ARITY]", "Select results by predicate name or name/arity. Repeat to select several; defaults to all authorized queries."), .repeatable = 1},
+    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit.", 1u, 0u)},
 };
 static const maelys_cli_option_t explain_options[] = {
-    {MAELYS_CLI_PATH("domain", "FILE", "Domain JSON declaration."), .required = 1},
-    {MAELYS_CLI_PATH("facts", "FILE", "Closed EDB facts."), .required = 1},
-    {MAELYS_CLI_CHOICE("why", "Explain presence or absence.", why_choices), .required = 1},
-    {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
-    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit (unsupported by the reference backend).", 1u, 0u)},
+    {MAELYS_CLI_PATH("domain", "FILE", "JSON file declaring the domain, predicates and atoms."), .required = 1},
+    {MAELYS_CLI_PATH("facts", "FILE", "Datalog file containing input facts (EDB); rules are not accepted."), .required = 1},
+    {MAELYS_CLI_CHOICE("why", "true: explain a derivation; false: explain an absent fact. Use --format json for the text document and typed structure.", why_choices), .required = 1},
+    {MAELYS_CLI_STRING("policy-id", "ID", "Identifier for the source policy (default: cli).")},
+    {MAELYS_CLI_UNSIGNED("work-limit", "N", "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit.", 1u, 0u)},
 };
 static const maelys_cli_example_t check_examples[] = {
     {MAELYS_CLI_EXAMPLE("check --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
@@ -1053,21 +1056,21 @@ static const maelys_cli_example_t queries_examples[] = {
 };
 static const maelys_cli_example_t fingerprint_examples[] = {
     {MAELYS_CLI_EXAMPLE("fingerprint --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
-                        "Read the RBAC policy and execution identities.")},
+                        "Show the RBAC policy and execution fingerprints.")},
 };
 static const maelys_cli_example_t solve_examples[] = {
     {MAELYS_CLI_EXAMPLE("solve --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl cli/tests/fixtures/rbac.dl",
-                        "Solve the RBAC policy against the example facts.")},
+                        "Evaluate the RBAC policy and list all authorized query results.")},
     {MAELYS_CLI_EXAMPLE("solve --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl --query can_deliver/1 cli/tests/fixtures/rbac.dl",
-                        "Select only the delivery query.")},
+                        "Show only can_deliver/1 results.")},
 };
 static const maelys_cli_example_t explain_examples[] = {
     {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl --why true cli/tests/fixtures/rbac.dl can_deliver \"Leela\"",
-                        "Explain why Leela can receive a delivery.")},
+                        "Explain why can_deliver(\"Leela\") is derived.")},
     {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl --why false cli/tests/fixtures/rbac.dl can_deliver \"Mallory\" --format json",
-                        "Read a structured explanation of an absent delivery permission.")},
+                        "Explain why can_deliver(\"Mallory\") is absent, as JSON with text and typed structure.")},
     {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/typed.domain.json --facts cli/tests/fixtures/typed.facts.dl --why true cli/tests/fixtures/typed.dl seen \"Leela\"",
-                        "Explain a symbol query; preserve its inner quotes as one shell argument.")},
+                        "Query the symbol \"Leela\"; keep its double quotes inside one shell argument.")},
     {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/typed.domain.json --facts cli/tests/fixtures/typed.facts.dl --why true cli/tests/fixtures/typed.dl seen 3",
                         "Explain an integer query.")},
     {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/typed.domain.json --facts cli/tests/fixtures/typed.facts.dl --why true cli/tests/fixtures/typed.dl seen true",
@@ -1075,22 +1078,22 @@ static const maelys_cli_example_t explain_examples[] = {
 };
 
 static const maelys_cli_command_t commands[] = {
-    {MAELYS_CLI_READ("check", "check", "Validate a domain and policy; exit 2 reports rejection.",
+    {MAELYS_CLI_READ("check", "check", "Validate a policy or manifest; exit 2 means semantic rejection.",
                      command_check), MAELYS_CLI_OPERANDS(policy_operand),
      MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_check_schema), MAELYS_CLI_EXAMPLES(check_examples)},
-    {MAELYS_CLI_READ("inspect", "inspect", "Inspect compiled policy counts, limits and authorized queries.",
+    {MAELYS_CLI_READ("inspect", "inspect", "Show compiled policy statistics, limits and authorized queries without solving.",
                      command_inspect), MAELYS_CLI_OPERANDS(policy_operand),
      MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_inspect_schema), MAELYS_CLI_EXAMPLES(inspect_examples)},
-    {MAELYS_CLI_READ("queries", "queries", "List each policy's effectively authorized queries.",
+    {MAELYS_CLI_READ("queries", "queries", "List the predicates each policy allows you to query.",
                      command_queries), MAELYS_CLI_OPERANDS(policy_operand),
      MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_queries_schema), MAELYS_CLI_EXAMPLES(queries_examples)},
-    {MAELYS_CLI_READ("fingerprint", "fingerprint", "Read policy and execution identities.",
-                     command_fingerprint), MAELYS_CLI_OPERANDS(policy_operand),
+    {MAELYS_CLI_READ("fingerprint", "fingerprint", "Show the policy fingerprint and its configured execution fingerprint.",
+                     command_fingerprint), MAELYS_CLI_OPERANDS(source_operand),
      MAELYS_CLI_OPTIONS(fingerprint_options), MAELYS_CLI_SCHEMA(datalog_fingerprint_schema), MAELYS_CLI_EXAMPLES(fingerprint_examples)},
-    {MAELYS_CLI_READ("solve", "solve", "Solve an inline policy against one EDB batch.",
-                     command_solve), MAELYS_CLI_OPERANDS(policy_operand),
+    {MAELYS_CLI_READ("solve", "solve", "Evaluate a policy with input facts and print query results.",
+                     command_solve), MAELYS_CLI_OPERANDS(source_operand),
      MAELYS_CLI_OPTIONS(solve_options), MAELYS_CLI_SCHEMA(datalog_solve_schema), MAELYS_CLI_EXAMPLES(solve_examples)},
-    {MAELYS_CLI_READ("explain", "explain", "Explain a typed query against a solved policy.",
+    {MAELYS_CLI_READ("explain", "explain", "Evaluate a policy and explain why a fact is present or absent.",
                      command_explain), MAELYS_CLI_OPERANDS(explain_operands),
      MAELYS_CLI_OPTIONS(explain_options), MAELYS_CLI_SCHEMA(datalog_explain_schema), MAELYS_CLI_EXAMPLES(explain_examples)},
 };
@@ -1099,7 +1102,7 @@ int main(int argc, char **argv) {
     const maelys_cli_app_t app = {
         .program = "maelys-datalog", .product = "Maelys Datalog",
         .version = DATALOG_CLI_VERSION,
-        .summary = "Validate, solve and explain bounded Datalog policies.",
+        .summary = "Validate Datalog policies, query facts and explain results.",
         .commands = commands, .command_count = MAELYS_CLI_COUNT(commands),
         .canonical_language = "en",
         .languages = product_languages, .language_count = MAELYS_CLI_COUNT(product_languages),
