@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   check:
-    uses: maelys-dev/maelys-release/.github/workflows/check-product.yml@18ff37d4acce34b01a9371be4ccb4f38b812d9c8 # v0.63.1
+    uses: maelys-dev/maelys-release/.github/workflows/check-product.yml@c411025b7d9131e693ed5c683b104d3204178e77 # v0.65.1
     with:
       product: maelys-datalog-cli
       sanitizer_command: make asan-cli PROFILE=SMALL && make asan-cli PROFILE=LARGE
