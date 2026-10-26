@@ -42,6 +42,15 @@ jobs:
             maelys-datalog version | tee "$RUNNER_TEMP/cli-homebrew-probe-cli-version.txt"
             test "$(maelys-datalog version)" = 'maelys-datalog 0.4.1'
           fi
+      - name: Verify the documented tap and trust path
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew tap maelys-dev/tap 2>&1 | tee "$RUNNER_TEMP/cli-homebrew-probe-trusted-tap.txt"
+          brew trust maelys-dev/tap 2>&1 | tee "$RUNNER_TEMP/cli-homebrew-probe-trusted-trust.txt"
+          brew install maelys-dev/tap/maelys-datalog 2>&1 | tee "$RUNNER_TEMP/cli-homebrew-probe-trusted-install.txt"
+          maelys-datalog version | tee "$RUNNER_TEMP/cli-homebrew-probe-cli-version.txt"
+          test "$(maelys-datalog version)" = 'maelys-datalog 0.4.1'
       - name: Preserve exact installation output
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
