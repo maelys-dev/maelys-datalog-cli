@@ -51,6 +51,7 @@ static const maelys_cli_translation_t french_texts[] = {
     {"  (none)\n", "  (aucun fait)\n"},
     {"Datalog source file; omit only with --manifest. Example paths are relative to the maelys-datalog-cli source checkout.", "Fichier source Datalog ; à omettre uniquement avec --manifest. Les chemins des exemples sont relatifs à la racine du dépôt maelys-datalog-cli."},
     {"--work-limit requires WORK_LIMIT capability; the reference backend does not support a nonzero work limit", "--work-limit nécessite la capacité WORK_LIMIT ; le backend de référence ne prend pas en charge une limite non nulle"},
+    {"%s/%zu (%zu fact):\n", "%s/%zu (%zu fait) :\n"},
     {"%s/%zu (%zu facts):\n", "%s/%zu (%zu faits) :\n"},
     {"facts file not found: %s", "fichier de faits introuvable : %s"},
     {"cannot open facts: %s", "impossible d’ouvrir les faits : %s"},

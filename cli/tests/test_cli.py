@@ -264,6 +264,27 @@ def french_text():
         ["describe", "--lang", "en", "--format", "json"]).stdout
 
 
+def solve_number_agreement():
+    domain, policy, facts = (FIXTURE / ("rbac." + suffix) for suffix in
+                            ("domain.json", "dl", "facts.dl"))
+    words = ("--domain", domain, "--facts", facts, policy)
+    assert text("solve", *words, "--lang", "fr") == (FIXTURE / "golden-solve-fr.txt").read_text()
+    with tempfile.TemporaryDirectory() as directory:
+        directory = pathlib.Path(directory)
+        policy = directory / "policy.dl"
+        policy.write_text("seen(X) :- input(X).\n")
+        facts = directory / "facts.dl"
+        for count in (0, 2):
+            facts.write_text("".join(f"input({n}).\n" for n in range(1, count + 1)))
+            words = ("--domain", FIXTURE / "typed.domain.json", "--facts", facts, policy)
+            for lang in ("en", "fr"):
+                name = f"golden-solve-count-{count}" + ("-fr" if lang == "fr" else "") + ".txt"
+                assert text("solve", *words, "--lang", lang) == (FIXTURE / name).read_text()
+            english = run("solve", *words, "--lang", "en")
+            assert english == run("solve", *words, "--lang", "fr")
+            assert len(english["queries"][0]["facts"]) == count
+
+
 def temporary_file(directory, name, content):
     path = pathlib.Path(directory) / name
     path.write_bytes(content if isinstance(content, bytes) else content.encode())
@@ -307,7 +328,7 @@ def basic():
     assert len(selected["queries"]) == 1
     assert text("solve", "--domain", domain, "--facts", facts,
                 "--query", "can_deliver/1", policy) == (
-                    'can_deliver/1 (1 facts):\n  can_deliver("Leela").\n')
+                    'can_deliver/1 (1 fact):\n  can_deliver("Leela").\n')
     yes = run("explain", "--domain", domain, "--facts", facts,
               "--why", "true", policy, "can_deliver", '"Leela"')
     no = run("explain", "--domain", domain, "--facts", facts,
@@ -444,7 +465,7 @@ def escaped_symbols():
         result = run("solve", "--domain", domain, "--facts", facts, policy)
         assert result["queries"][0]["facts"] == [[{"kind": "symbol", "value": expected}]]
         human = text("solve", "--domain", domain, "--facts", facts, policy)
-        assert human == 'output/1 (1 facts):\n  output("quote\\" slash\\\\ alphaα").\n'
+        assert human == 'output/1 (1 fact):\n  output("quote\\" slash\\\\ alphaα").\n'
         assert run("explain", "--domain", domain, "--facts", facts,
                    "--why", "true", policy, "output",
                    '"quote\\" slash\\\\ alpha\\u03b1"')["present"]
@@ -726,4 +747,5 @@ if __name__ == "__main__":
     diagnosed_explanations()
 
     french_text()
+    solve_number_agreement()
     print("cli behavior and schemas: PASS")

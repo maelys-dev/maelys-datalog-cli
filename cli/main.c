@@ -841,7 +841,8 @@ static int command_solve(maelys_cli_context_t *context) {
         }
         char heading[128];
         int heading_length = snprintf(heading, sizeof(heading),
-                                      human_translation(context, "%s/%zu (%zu facts):\n"), p->name,
+                                      human_translation(context, count == 1 ? "%s/%zu (%zu fact):\n" :
+                                                        "%s/%zu (%zu facts):\n"), p->name,
                                       p->arity, count);
         if (heading_length < 0 || (size_t)heading_length >= sizeof(heading))
             human.failed = 1;

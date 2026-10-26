@@ -1,0 +1,3 @@
+seen/1 (2 facts):
+  seen(1).
+  seen(2).

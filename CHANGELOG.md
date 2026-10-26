@@ -4,6 +4,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Agree the solve fact count in English and French, including singular and
+  plural output; keep structured results unchanged.
+
 - Render `explain` text as readable English or French sentences with Datalog
   facts, source variable names and clear obstacles. Preserve JSON documents and
   typed records; add `--raw` for the original SDK document in text mode.
