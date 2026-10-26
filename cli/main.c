@@ -942,7 +942,10 @@ static int command_explain(maelys_cli_context_t *context) {
         rc = maelys_datalog_prepared_explanation_write_text(state.explanation, document, required + 1u);
     if (rc != MAELYS_DATALOG_STATUS_OK) {
         for (size_t i = 0; i < term_count; ++i) free(owned[i]);
-        free(document); cleanup(&state); return status_failure(context, rc, &diagnostic);
+        free(document); cleanup(&state);
+        return status_failure(context, rc,
+            diagnostic.status == rc && diagnostic.code != MAELYS_DATALOG_DIAG_NONE
+                ? &diagnostic : NULL);
     }
     char policy[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
     char execution[MAELYS_DATALOG_PUBLIC_FINGERPRINT_BYTES];
