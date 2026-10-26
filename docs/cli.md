@@ -8,9 +8,9 @@ Common contract: `agent-cli/v2`. For the machine-readable detail run
 
 | Identifier | Usage | Effect | Output | Purpose |
 | --- | --- | --- | --- | --- |
-| help | `help [COMMAND_ID] \| --help` | read | json-envelope | Show the generated CLI guide or one command's help. |
-| version | `version \| --version` | read | json-envelope | Return product identity. |
-| describe | `describe [COMMAND_ID] [--summary] [--prefix PREFIX]` | read | json-envelope | Return the machine-readable catalog, summary or one descriptor. |
+| help | `help [COMMAND_ID] \| --help` | read | json-envelope | Show the help of the program, of one command or of one family. |
+| version | `version \| --version` | read | json-envelope | Show the product, program, version and contract. |
+| describe | `describe [COMMAND_ID] [--summary] [--prefix PREFIX]` | read | json-envelope | Show the machine-readable catalog, its summary or one descriptor. |
 | completion | `completion SHELL` | read | json-envelope | Print the shell completion script generated from the catalog. |
 | complete.candidates | `__complete [WORDS...]` | read | json-records | Return completion candidates for a partial command line. |
 | check | `check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | Validate a domain and policy; exit 2 reports rejection. |
@@ -32,4 +32,5 @@ Global options:
 - `--verbose`: Add the details of the run on stderr in text mode; silent in JSON.
 - `--pager auto|always|never`: Page the text rendering when stdout is a terminal; never in a pipe, in JSON or under --non-interactive.
 - `--field NAME`: Render one top-level member of data instead of the whole result, by the text or jsonl rendering rules.
+- `--lang TAG`: Language of the human text.
 - `--help`: Show the help of the selected command.

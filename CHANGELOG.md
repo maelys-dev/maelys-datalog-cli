@@ -4,6 +4,17 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Accept an installed SDK at or above the pinned minimum, within public API 2
+  and program ABI 2, verified by compiling its public headers. Reject older
+  versions or incompatible contracts before linking.
+
+- Adopt maelys-cli 0.12.4, agent-cli-spec 2.21.0, Datalog SDK 0.26.0
+  and maelys-release 0.65.1. Preserve the JSON 0.3.0 pin required by the
+  framework and accept abbreviated optional switches in human help tests.
+
+- Build the Homebrew CLI against the installed static `libmaelys-datalog` SDK,
+  with explicit installed-version and profile checks.
+
 - Add `inspect` with compiled policy counts, program limits, authorized queries
   and separately named inspection session capacities.
 

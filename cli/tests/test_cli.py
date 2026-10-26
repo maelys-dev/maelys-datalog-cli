@@ -4,6 +4,7 @@ import hashlib
 import json
 import pathlib
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -89,10 +90,24 @@ def help_catalog():
         page = text("help", command["id"])
         assert " ".join(command["pattern"]) in page
         assert " ".join(command["purpose"].split()) in " ".join(page.split())
-        assert " ".join(command["usage"].split()) in " ".join(page.split())
+        # Human help may shorten optional switches to [options]. The complete
+        # usage remains machine-readable in describe's command catalog.
+        help_data = json.loads(subprocess.check_output(
+            [str(BINARY), "help", command["id"], "--format", "json"], text=True))["data"]
+        assert command["id"] in help_data["commands"]
+        assert command["usage"].startswith(" ".join(command["pattern"]))
+        assert help_data["text"].strip() == page.strip()
         assert command["examples"]
         for example in command["examples"]:
-            assert " ".join(example["words"]) in " ".join(page.split())
+            rendered = []
+            for line in page.splitlines():
+                try:
+                    words = shlex.split(line)
+                except ValueError:
+                    continue
+                if words and words[0] == BINARY.name:
+                    rendered.append(words[1:])
+            assert example["words"] in rendered
 
 
 def temporary_file(directory, name, content):

@@ -21,7 +21,7 @@
               {
                 "name": "COMMAND_ID",
                 "required": false,
-                "summary": "Stable command identifier whose help is shown, the family of commands under an identifier, or `conventions`.",
+                "summary": "Stable command identifier whose help is shown, or the family of commands under an identifier.",
                 "variadic": false
               }
             ],
@@ -52,7 +52,7 @@
           "pattern": [
             "help"
           ],
-          "purpose": "Show the generated CLI guide or one command's help.",
+          "purpose": "Show the help of the program, of one command or of one family.",
           "usage": "help [COMMAND_ID] | --help"
         },
         {
@@ -86,6 +86,9 @@
               "framework": {
                 "type": "string"
               },
+              "lang": {
+                "type": "string"
+              },
               "product": {
                 "type": "string"
               },
@@ -102,14 +105,15 @@
               "version",
               "contract",
               "cliApi",
-              "framework"
+              "framework",
+              "lang"
             ],
             "type": "object"
           },
           "pattern": [
             "version"
           ],
-          "purpose": "Return product identity.",
+          "purpose": "Show the product, program, version and contract.",
           "usage": "version | --version"
         },
         {
@@ -186,7 +190,7 @@
           "pattern": [
             "describe"
           ],
-          "purpose": "Return the machine-readable catalog, summary or one descriptor.",
+          "purpose": "Show the machine-readable catalog, its summary or one descriptor.",
           "usage": "describe [COMMAND_ID] [--summary] [--prefix PREFIX]"
         },
         {
@@ -2385,6 +2389,19 @@
           "summary": "Render one top-level member of data instead of the whole result, by the text or jsonl rendering rules."
         },
         {
+          "argument": {
+            "name": "TAG",
+            "pattern": "^[A-Za-z]{2,3}(-[A-Za-z]{4})?(-([A-Za-z]{2}|[0-9]{3}))?$",
+            "type": "string"
+          },
+          "conflictsWith": [],
+          "long": "--lang",
+          "repeatable": false,
+          "required": false,
+          "requires": [],
+          "summary": "Language of the human text."
+        },
+        {
           "conflictsWith": [],
           "long": "--help",
           "repeatable": false,
@@ -2411,7 +2428,8 @@
       },
       "product": "Maelys Datalog",
       "program": "maelys-datalog",
-      "schemaVersion": 1
+      "schemaVersion": 1,
+      "x-maelys-summary": "Validate, solve and explain bounded Datalog policies."
     }
   }
 }
