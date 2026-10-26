@@ -134,6 +134,11 @@ cli-test: $(BIN) check-spec-contract
 conformance-check: $(BIN) check-spec-contract
 	python3 "$(SPEC_DIR)/conformance/run.py" $(abspath $(BIN))
 
+.PHONY: invocation-check
+invocation-check: $(BIN) check-spec-contract
+	python3 "$(SPEC_DIR)/tests/invocations.py" --lines 8 --timeout 10 --budget 180 \
+		--format-variable MAELYS_CLI_FORMAT $(abspath $(BIN))
+
 $(BUILD_DIR)/bin/sdk-policy-lifetime: cli/tests/sdk_policy_lifetime.c | $(ENGINE_LIB)
 	@mkdir -p $(dir $@)
 	$(CC) -std=c11 -D_POSIX_C_SOURCE=200112L -Wall -Wextra -Werror \
@@ -196,7 +201,7 @@ manual-mdx: $(BIN)
 	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" --format mdx --body-only $(abspath $(BIN)) > $(BUILD_DIR)/man/maelys-datalog.mdx
 
 check: check-engine-contract check-cli-contract check-json-contract \
-    check-spec-contract cli-test conformance-check installed-sdk-check sdk-compatibility-check man-check
+    check-spec-contract cli-test conformance-check installed-sdk-check sdk-compatibility-check man-check invocation-check
 
 asan-cli:
 	$(MAKE) BUILD_DIR=build/asan-$(PROFILE) PROFILE=$(PROFILE) \

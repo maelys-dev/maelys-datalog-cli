@@ -153,6 +153,12 @@ def diagnostic_details():
                 policy, "unknown", '"Leela"', exit_code=1)
     assert error["code"] == "NOT_FOUND"
     assert error["issues"][0]["code"] == "DATALOG_QUERY_UNKNOWN"
+    for terms, cause in [((), "DATALOG_QUERY_ARITY"), (("unquoted",), "DATALOG_QUERY_TERM")]:
+        error = run("explain", "--domain", domain, "--facts", facts, "--why", "true",
+                    policy, "can_deliver", *terms, exit_code=1)
+        assert error["code"] == "VALIDATION_FAILED"
+        assert error["issues"][0]["code"] == cause
+
     with tempfile.TemporaryDirectory() as directory:
         source = pathlib.Path(directory) / "bad.dl"
         source.write_text("allow( :-")
