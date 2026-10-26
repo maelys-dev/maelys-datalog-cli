@@ -17,6 +17,7 @@ trap 'rm -rf "$work"' EXIT HUP INT TERM
 make BUILD_DIR=build/release check
 make BUILD_DIR=build/release DESTDIR="$work/stage" PREFIX=/usr/local install
 test -x "$work/stage/usr/local/bin/maelys-datalog"
+test -f "$work/stage/usr/local/share/man/man1/maelys-datalog.1"
 test -f "$work/stage/usr/local/share/doc/maelys-datalog/cli-contract.json"
 mkdir -p dist
 name="maelys-datalog-cli-$version-$target.tar.gz"
