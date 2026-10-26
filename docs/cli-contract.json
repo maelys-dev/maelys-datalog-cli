@@ -2554,6 +2554,7 @@
             " (policy fact)": " (fait de la politique)",
             " cannot derive ": " ne peut pas d\u00e9duire ",
             " derives ": " d\u00e9duit ",
+            "%s/%zu (%zu fact):\n": "%s/%zu (%zu fait) :\n",
             "%s/%zu (%zu facts):\n": "%s/%zu (%zu faits) :\n",
             "--manifest conflicts with an inline policy operand or --policy-id": "--manifest est incompatible avec une politique autonome ou --policy-id",
             "--work-limit requires WORK_LIMIT capability; the reference backend does not support a nonzero work limit": "--work-limit n\u00e9cessite la capacit\u00e9 WORK_LIMIT ; le backend de r\u00e9f\u00e9rence ne prend pas en charge une limite non nulle",
