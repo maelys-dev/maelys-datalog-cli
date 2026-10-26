@@ -18,7 +18,7 @@ Common contract: `agent-cli/v2`. For the machine-readable detail run
 | queries | `queries [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | List the predicates each policy allows you to query. |
 | fingerprint | `fingerprint POLICY --domain FILE [--policy-id ID] [--work-limit N]` | read | json-envelope | Show the policy fingerprint and its configured execution fingerprint. |
 | solve | `solve POLICY --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]` | read | json-envelope | Evaluate a policy with input facts and print query results. |
-| explain | `explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true\|false [--policy-id ID] [--work-limit N]` | read | json-envelope | Evaluate a policy and explain why a fact is present or absent. |
+| explain | `explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true\|false [--raw] [--policy-id ID] [--work-limit N]` | read | json-envelope | Evaluate a policy and explain why a fact is present or absent. |
 
 Global options:
 

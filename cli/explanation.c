@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MPL-2.0 */
 #include "explanation.h"
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 static const char *name(const char *const *names, size_t count, unsigned code) {
     return code < count ? names[code] : "unknown";
 }
@@ -166,4 +170,218 @@ maelys_datalog_status_t datalog_cli_explanation_json(maelys_cli_json_writer_t *j
     }
     (void)maelys_cli_json_end_array(j); (void)maelys_cli_json_end_object(j);
     return MAELYS_DATALOG_STATUS_OK;
+}
+
+/* Human presentation consumes the public typed views while their lease is live.
+ * The SDK document and JSON serializer above remain the machine contract. */
+typedef struct {
+    char *data;
+    size_t length, capacity;
+    int failed;
+    const maelys_cli_context_t *context;
+} explanation_text_t;
+
+static const char *translated(explanation_text_t *out, const char *source) {
+    const maelys_cli_language_t *language = out->context->language;
+    if (language) for (size_t i = 0; i < language->translation_count; ++i) {
+        const maelys_cli_translation_t *entry = &language->translations[i];
+        if (strcmp(entry->source, source) == 0) return entry->text;
+    }
+    return source;
+}
+static void append(explanation_text_t *out, const char *s) {
+    if (out->failed) return;
+    size_t length = strlen(s);
+    if (length > SIZE_MAX - out->length - 1u) {out->failed = 1; return;}
+    size_t needed = out->length + length + 1u;
+    if (needed > out->capacity) {
+        size_t capacity = out->capacity ? out->capacity : 256u;
+        while (capacity < needed) {
+            if (capacity > SIZE_MAX / 2u) {capacity = needed; break;}
+            capacity *= 2u;
+        }
+        char *grown = realloc(out->data, capacity);
+        if (!grown) {out->failed = 1; return;}
+        out->data = grown; out->capacity = capacity;
+    }
+    memcpy(out->data + out->length, s, length + 1u); out->length += length;
+}
+static void sentence(explanation_text_t *out, const char *s) {
+    append(out, translated(out, s));
+}
+static void number(explanation_text_t *out, size_t n) {
+    char text[32]; (void)snprintf(text, sizeof text, "%zu", n); append(out, text);
+}
+static void human_value(explanation_text_t *out, const maelys_datalog_value_t *v) {
+    if (v->kind == MAELYS_DATALOG_VALUE_SYMBOL) {
+        static const char hex[] = "0123456789abcdef";
+        append(out, "\"");
+        for (const unsigned char *p = (const unsigned char *)v->as.symbol; *p; ++p) {
+            if (*p == '"' || *p == '\\') {
+                char s[] = {'\\', (char)*p, 0}; append(out, s);
+            } else if (*p < 0x20u) {
+                char s[] = {'\\', 'u', '0', '0', hex[*p >> 4], hex[*p & 15], 0}; append(out, s);
+            } else {char s[] = {(char)*p, 0}; append(out, s);}
+        }
+        append(out, "\"");
+    } else if (v->kind == MAELYS_DATALOG_VALUE_INTEGER) {
+        char text[32]; (void)snprintf(text, sizeof text, "%" PRId64, v->as.integer); append(out, text);
+    } else if (v->kind == MAELYS_DATALOG_VALUE_BOOLEAN) append(out, v->as.boolean ? "true" : "false");
+    else out->failed = 1;
+}
+static void human_fact(explanation_text_t *out, const maelys_datalog_fact_t *f) {
+    append(out, f->predicate); append(out, "(");
+    for (size_t i = 0; i < f->arity; ++i) {if (i) append(out, ", "); human_value(out, &f->terms[i]);}
+    append(out, ").");
+}
+static void variable(explanation_text_t *out, unsigned id) {
+    /* The public standard-grammar contract maps A-Z to 0-25; 26+ are
+     * anonymous locals, not additional source variable names. */
+    char text[] = {id < 26u ? (char)('A' + id) : '_', 0}; append(out, text);
+}
+static void human_atom(explanation_text_t *out, const maelys_datalog_ir_atom_t *a) {
+    append(out, a->predicate); append(out, "(");
+    for (size_t i = 0; i < a->arity; ++i) {
+        if (i) append(out, ", ");
+        const maelys_datalog_ir_term_t *t = &a->terms[i];
+        if (t->kind == MAELYS_DATALOG_IR_VARIABLE) variable(out, t->as.variable);
+        else {
+            maelys_datalog_value_t v = {0};
+            if (t->kind == MAELYS_DATALOG_IR_SYMBOL) {v.kind = MAELYS_DATALOG_VALUE_SYMBOL; v.as.symbol = t->as.symbol;}
+            else if (t->kind == MAELYS_DATALOG_IR_INTEGER) {v.kind = MAELYS_DATALOG_VALUE_INTEGER; v.as.integer = t->as.integer;}
+            else {v.kind = MAELYS_DATALOG_VALUE_BOOLEAN; v.as.boolean = t->as.boolean;}
+            human_value(out, &v);
+        }
+    }
+    append(out, ").");
+}
+static void human_comparison(explanation_text_t *out, maelys_datalog_ir_comparison_t op,
+    const maelys_datalog_value_t *lhs, const maelys_datalog_value_t *rhs) {
+    static const char *const operators[] = {"?", "=", "!=", "<", "<=", ">", ">="};
+    human_value(out, lhs); append(out, " ");
+    append(out, name(operators, sizeof operators / sizeof operators[0], (unsigned)op));
+    append(out, " "); human_value(out, rhs);
+}
+static void human_origin(explanation_text_t *out, unsigned code) {
+    if (code == 1u) sentence(out, " (policy fact)");
+    else if (code == 2u) sentence(out, " (input fact)");
+    else if (code == 3u) sentence(out, " (derived fact)");
+}
+static maelys_datalog_status_t human_premise(explanation_text_t *out,
+    const maelys_datalog_explanation_premise_view_t *p) {
+    append(out, "  - ");
+    switch (p->kind) {
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_POSITIVE_FACT:
+        human_atom(out, &p->atom); human_origin(out, p->origin); break;
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_NEGATED_ABSENCE:
+        sentence(out, "No matching fact: "); human_atom(out, &p->atom); break;
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_COMPARISON_TRUE:
+        sentence(out, "The comparison holds: "); human_comparison(out, p->op, &p->lhs, &p->rhs); append(out, "."); break;
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_FILTER_TRUE:
+        sentence(out, "The filter accepts "); human_value(out, &p->filter_value); append(out, "."); break;
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_COUNT:
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_MIN:
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_MAX:
+    case MAELYS_DATALOG_EXPLANATION_PREMISE_SUM: {
+        static const char *const labels[] = {"The count condition holds for ", "The minimum condition holds for ", "The maximum condition holds for ", "The sum condition holds for "};
+        sentence(out, labels[p->kind - MAELYS_DATALOG_EXPLANATION_PREMISE_COUNT]);
+        human_atom(out, &p->atom); break;
+    }
+    default: return MAELYS_DATALOG_STATUS_UNSUPPORTED;
+    }
+    append(out, "\n"); return MAELYS_DATALOG_STATUS_OK;
+}
+static maelys_datalog_status_t human_obstacle(explanation_text_t *out,
+    const maelys_datalog_explanation_obstacle_view_t *o) {
+    sentence(out, "\nRule "); number(out, o->rule_id); sentence(out, " cannot derive ");
+    human_fact(out, &o->target); append(out, "\n");
+    if (o->bound_variable_mask & ((UINT32_C(1) << 26) - 1u)) {
+        sentence(out, "  With "); int first = 1;
+        for (unsigned n = 0; n < 26u; ++n) {
+            if (!(o->bound_variable_mask & (UINT32_C(1) << n))) continue;
+            if (!first) append(out, ", ");
+            first = 0;
+            variable(out, n); append(out, " = "); human_value(out, &o->substitution[n]);
+        }
+        append(out, ".\n");
+    }
+    for (size_t n = 0; n < o->support_count; ++n) {
+        sentence(out, "  Already satisfied: "); human_fact(out, &o->supports[n].fact);
+        human_origin(out, o->supports[n].origin); append(out, "\n");
+    }
+    append(out, "  ");
+    switch (o->obstacle_kind) {
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_POSITIVE_NO_MATCH:
+        sentence(out, "No matching fact for "); human_atom(out, &o->pattern); break;
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_NEGATIVE_CONTRADICTED:
+        sentence(out, "Negation fails because this fact exists: "); human_atom(out, &o->pattern); human_origin(out, o->obstacle_origin); break;
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_COMPARISON_FALSE:
+        sentence(out, "The comparison fails: "); human_comparison(out, o->op, &o->lhs, &o->rhs); append(out, "."); break;
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_RECURSIVE_NO_BASE_SUPPORT:
+        sentence(out, "Recursion has no supporting fact to start from: "); human_atom(out, &o->pattern); break;
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_FILTER_FALSE:
+        sentence(out, "The filter rejects "); human_value(out, &o->filter_value); append(out, "."); break;
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_COUNT_MISMATCH:
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_MIN_MISMATCH:
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_MAX_MISMATCH:
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_SUM_MISMATCH: {
+        static const char *const labels[] = {"The number of matching facts differs from the requested value: ", "The minimum differs from the requested value: ", "The maximum differs from the requested value: ", "The sum differs from the requested value: "};
+        sentence(out, labels[o->obstacle_kind - MAELYS_DATALOG_WHY_FALSE_OBSTACLE_COUNT_MISMATCH]);
+        human_atom(out, &o->pattern); break;
+    }
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_MIN_EMPTY:
+    case MAELYS_DATALOG_WHY_FALSE_OBSTACLE_MAX_EMPTY:
+        sentence(out, o->obstacle_kind == MAELYS_DATALOG_WHY_FALSE_OBSTACLE_MIN_EMPTY
+            ? "The minimum has no matching input fact: " : "The maximum has no matching input fact: ");
+        human_atom(out, &o->pattern); break;
+    default: return MAELYS_DATALOG_STATUS_UNSUPPORTED;
+    }
+    append(out, "\n"); return MAELYS_DATALOG_STATUS_OK;
+}
+maelys_datalog_status_t datalog_cli_explanation_text(const maelys_cli_context_t *context,
+    const maelys_datalog_prepared_explanation_t *prepared,
+    const maelys_datalog_fact_t *query, char **text) {
+    explanation_text_t out = {.context = context};
+    maelys_datalog_explanation_info_t info = {0};
+    maelys_datalog_status_t rc = maelys_datalog_prepared_explanation_info(prepared, &info);
+    if (rc != MAELYS_DATALOG_STATUS_OK) return rc;
+    if (info.kind == MAELYS_DATALOG_EXPLAIN_TRUE) {
+        sentence(&out, info.found ? "The fact is present: " : "The fact is not derived: ");
+        human_fact(&out, query); append(&out, "\n");
+        if (!info.found) sentence(&out, "No derivation is available. Use --why false to inspect the obstacles.\n");
+        for (size_t i = 0; i < info.step_count; ++i) {
+            maelys_datalog_explanation_step_view_t s = {0};
+            rc = maelys_datalog_prepared_explanation_step(prepared, i, &s);
+            if (rc != MAELYS_DATALOG_STATUS_OK) goto fail;
+            sentence(&out, "\nRule "); number(&out, s.rule_id); sentence(&out, " derives "); human_fact(&out, &s.fact); append(&out, "\n");
+            for (size_t n = 0; n < s.premise_count; ++n) {
+                maelys_datalog_explanation_premise_view_t p = {0};
+                rc = maelys_datalog_prepared_explanation_premise(prepared, s.premise_begin + n, &p);
+                if (rc == MAELYS_DATALOG_STATUS_OK) rc = human_premise(&out, &p);
+                if (rc != MAELYS_DATALOG_STATUS_OK) goto fail;
+            }
+        }
+    } else if (info.found) {
+        sentence(&out, "The fact is present, so an absence explanation does not apply:\n");
+        human_fact(&out, query); append(&out, "\n");
+    } else {
+        sentence(&out, "The fact is not derived: "); human_fact(&out, query); append(&out, "\n");
+        if (info.false_summary == MAELYS_DATALOG_WHY_FALSE_SUMMARY_NO_CANDIDATE_RULE)
+            sentence(&out, "No rule can derive this fact.\n");
+        for (size_t i = 0; i < info.diagnostic_count; ++i) {
+            maelys_datalog_explanation_obstacle_view_t o = {0};
+            rc = maelys_datalog_prepared_explanation_obstacle(prepared, i, &o);
+            if (rc == MAELYS_DATALOG_STATUS_OK) rc = human_obstacle(&out, &o);
+            if (rc != MAELYS_DATALOG_STATUS_OK) goto fail;
+        }
+    }
+    if (info.truncated) {
+        sentence(&out, "\nThe explanation is incomplete: an exploration limit was reached.\n");
+        if (info.kind == MAELYS_DATALOG_EXPLAIN_FALSE && !info.found)
+            sentence(&out, "This does not prove that the fact cannot be derived.\n");
+    }
+    if (out.failed) {rc = MAELYS_DATALOG_STATUS_INTERNAL; goto fail;}
+    *text = out.data; return MAELYS_DATALOG_STATUS_OK;
+fail:
+    free(out.data); return rc;
 }

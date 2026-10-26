@@ -1,0 +1,2 @@
+Le fait est présent ; une explication de son absence ne s’applique donc pas :
+can_deliver("Leela").

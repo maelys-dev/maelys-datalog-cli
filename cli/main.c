@@ -987,15 +987,19 @@ static int command_explain(maelys_cli_context_t *context) {
     maelys_datalog_fact_t query = {.predicate = predicate->name, .arity = term_count};
     memcpy(query.terms, terms, term_count * sizeof terms[0]);
     rc = datalog_cli_explanation_json(&json, state.explanation, &query);
+    char *human = NULL;
+    if (rc == MAELYS_DATALOG_STATUS_OK && context->invocation->format == MAELYS_CLI_FORMAT_TEXT &&
+        !maelys_cli_flag(context, "raw"))
+        rc = datalog_cli_explanation_text(context, state.explanation, &query, &human);
     for (size_t i = 0; i < term_count; ++i) free(owned[i]);
     if (rc != MAELYS_DATALOG_STATUS_OK) {
         maelys_cli_json_writer_clear(&json);
         free(document); cleanup(&state); return status_failure(context, rc, NULL);
     }
     (void)maelys_cli_json_end_object(&json);
-    int result = maelys_cli_succeed_writer(context, &json, document,
+    int result = maelys_cli_succeed_writer(context, &json, human ? human : document,
                                            MAELYS_CLI_EXIT_OK);
-    free(document); cleanup(&state);
+    free(human); free(document); cleanup(&state);
     return result;
 }
 
@@ -1031,9 +1035,10 @@ static const maelys_cli_option_t solve_options[] = {
     {MAELYS_CLI_UNSIGNED("work-limit", "N", "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit.", 1u, 0u)},
 };
 static const maelys_cli_option_t explain_options[] = {
+    {MAELYS_CLI_FLAG("raw", "Print the SDK explanation document verbatim in text format; JSON always includes it.")},
     {MAELYS_CLI_PATH("domain", "FILE", "JSON file declaring the domain, predicates and atoms."), .required = 1},
     {MAELYS_CLI_PATH("facts", "FILE", "Datalog file containing input facts (EDB); rules are not accepted."), .required = 1},
-    {MAELYS_CLI_CHOICE("why", "true: explain a derivation; false: explain an absent fact. Use --format json for the text document and typed structure.", why_choices), .required = 1},
+    {MAELYS_CLI_CHOICE("why", "true: explain a derivation; false: explain an absent fact. Text is readable prose; JSON retains the SDK document and typed structure.", why_choices), .required = 1},
     {MAELYS_CLI_STRING("policy-id", "ID", "Identifier for the source policy (default: cli).")},
     {MAELYS_CLI_UNSIGNED("work-limit", "N", "Positive cooperative work budget; unsupported by the reference backend. Omit for no limit.", 1u, 0u)},
 };

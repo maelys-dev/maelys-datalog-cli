@@ -1,10 +1,8 @@
-MAELYS-DATALOG-v2
-document=why-true
-status=complete
-steps=2 premises=3
-step=0 rule=1 fact="allow"("Leela","billing:read")
-premise=0 body=0 kind=positive origin=policy-fact fact="right"("Leela","billing:read") parent=-
-step=1 rule=2 fact="can_deliver"("Leela")
-premise=1 body=0 kind=positive origin=idb fact="allow"("Leela","billing:read") parent=0
-premise=2 body=1 kind=positive origin=edb fact="request"("Leela","billing:read") parent=-
-result-step=1
+The fact is present: can_deliver("Leela").
+
+Rule 1 derives allow("Leela", "billing:read").
+  - right("Leela", "billing:read"). (policy fact)
+
+Rule 2 derives can_deliver("Leela").
+  - allow("Leela", "billing:read"). (derived fact)
+  - request("Leela", "billing:read"). (input fact)

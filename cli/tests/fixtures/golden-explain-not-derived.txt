@@ -1,0 +1,2 @@
+The fact is not derived: can_deliver("Mallory").
+No derivation is available. Use --why false to inspect the obstacles.

@@ -23,8 +23,9 @@ from validate import validate  # noqa: E402
 
 def run(command, *arguments, exit_code=0):
     process = subprocess.run(
-        [str(BINARY), command, *map(str, arguments),
-         *([] if "--format" in arguments else ["--format", "json"]), "--compact"],
+        [str(BINARY), command,
+         *([] if "--format" in arguments else ["--format", "json"]), "--compact",
+         *map(str, arguments)],
         capture_output=True, text=True, cwd=ROOT, check=False,
     )
     assert process.returncode == exit_code, (command, process.stdout, process.stderr)
@@ -180,6 +181,8 @@ def diagnosed_explanations():
                             ("domain.json", "dl", "facts.dl"))
     cases = [("explain-present", "true", "can_deliver", '\"Leela\"', 0),
              ("explain", "false", "can_deliver", '\"Mallory\"', 0),
+             ("explain-not-derived", "true", "can_deliver", '\"Mallory\"', 0),
+             ("explain-not-applicable", "false", "can_deliver", '\"Leela\"', 0),
              ("explain-unknown", "true", "unknown", '\"Leela\"', 1),
              ("explain-unseen", "true", "can_deliver", '\"UnseenSymbol\"', 1),
              ("explain-unseen", "false", "can_deliver", '\"UnseenSymbol\"', 1)]
@@ -202,11 +205,19 @@ def diagnosed_explanations():
                 result[key] = "<fingerprint>"
         assert result == json.loads((FIXTURE / f"golden-{name}.json").read_text())
 
-        if status:
-            french = text("explain", *args, "--lang", "fr", exit_code=status)
-            assert french == (FIXTURE / f"golden-{name}-fr.txt").read_text()
-            assert "[NOT_FOUND] not_found" not in french
-            assert run("explain", *args, "--lang", "fr", exit_code=status) == result
+        french = text("explain", *args, "--lang", "fr", exit_code=status)
+        assert french == (FIXTURE / f"golden-{name}-fr.txt").read_text()
+        assert "[NOT_FOUND] not_found" not in french
+        localized = run("explain", *args, "--lang", "fr", exit_code=status)
+        for key in ("policyFingerprint", "executionFingerprint"):
+            if key in localized:
+                localized[key] = "<fingerprint>"
+        assert localized == result
+        if not status:
+            assert not human.startswith("MAELYS-DATALOG-v2")
+            assert not french.startswith("MAELYS-DATALOG-v2")
+            assert text("explain", *args, "--raw") == result["document"]
+            assert text("explain", *args, "--raw", "--lang", "fr") == result["document"]
 
 def french_text():
     def invoke(words, env=None):
@@ -443,6 +454,9 @@ def escaped_symbols():
         assert control_result["queries"][0]["facts"][0][0]["value"] == "line\nfeed 😀"
         assert 'output("line\\u000afeed 😀").' in text(
             "solve", "--domain", domain, "--facts", controls, policy)
+        assert 'output("line\\u000afeed 😀").' in text(
+            "explain", "--domain", domain, "--facts", controls, "--why", "true",
+            policy, "output", json.dumps("line\nfeed 😀"))
         for name, literal in (("bad-escape", '"bad\\x"'),
                               ("bad-surrogate", '"bad\\uD800"'),
                               ("nul", '"bad\\u0000"')):
@@ -606,7 +620,7 @@ def structured_explanations():
         assert structure["found"] == result["present"]
         assert structure["status"] == "complete" and not structure["truncated"]
         assert text("explain", "--domain", domain, "--facts", facts, "--why",
-                    result["why"], policy, "can_deliver", json.dumps(who)) == result["document"]
+                    result["why"], policy, "can_deliver", json.dumps(who), "--raw") == result["document"]
     assert yes["structure"]["kind"] == "why-true"
     premises = [p for step in yes["structure"]["steps"] for p in step["premises"]]
     assert {p["origin"] for p in premises} == {"policy-fact", "edb", "idb"}
@@ -642,9 +656,13 @@ def structured_cases():
             policy = temporary_file(temp, "policy.dl", source)
             facts = temporary_file(temp, "facts.dl", inputs)
             result = run("explain", "--domain", domain, "--facts", facts, "--why", why,
-                         policy, "seen", term)
+                         policy, "seen", "--", term)
             assert text("explain", "--domain", domain, "--facts", facts, "--why", why,
-                        policy, "seen", term) == result["document"]
+                        policy, "seen", "--raw", "--", term) == result["document"]
+            human = text("explain", "--domain", domain, "--facts", facts, "--why", why,
+                         policy, "seen", "--", term)
+            assert not human.startswith("MAELYS-DATALOG-v2")
+            assert not any(token in human for token in ("binding=", "body=", "obstacle="))
             return result
         source = "enabled(true). seen(X) :- seed(X), X >= 2, not(blocked(X)), enabled(true)."
         inputs = "seed(1). seed(3). seed(4). blocked(4)."
@@ -669,6 +687,19 @@ def structured_cases():
                        if why == "true" else result["obstacles"])
             record = next(p for p in records if p["kind"] == expected)
             assert record["filter"]["value"] == {"kind": "symbol", "value": "alice"}
+        negative = explain("seen(X) :- seed(X).", "seed(-3).", "true", "-3")
+        assert negative["structure"]["query"]["terms"] == [{"kind": "integer", "value": -3}]
+        # Exercise every aggregate presentation and empty min/max groups.
+        for op, expected in (("count", 2), ("min", 1), ("max", 3), ("sum", 4)):
+            aggregate_source = f"seen(N) :- {op}(X, seed(X), N)."
+            present = explain(aggregate_source, "seed(1). seed(3).", "true", str(expected))
+            assert present["structure"]["query"]["terms"] == [{"kind": "integer", "value": expected}]
+            assert any(p["kind"] == op for step in present["structure"]["steps"] for p in step["premises"])
+            absent = explain(aggregate_source, "seed(1). seed(3).", "false", "9")["structure"]
+            assert any(o["kind"] == op + "-mismatch" for o in absent["obstacles"])
+        for op in ("min", "max"):
+            empty = explain(f"seen(N) :- {op}(X, seed(X), N).", "", "false", "9")["structure"]
+            assert any(o["kind"] == op + "-empty" for o in empty["obstacles"])
         missing = explain("enabled(true).", 'seed("alice").', "false", '"alice"')["structure"]
         assert missing["summary"] == "no-candidate-rule" and not missing["obstacles"]
         recursive = explain("seen(X) :- seen(X).", 'seed("alice").', "false", '"alice"')["structure"]

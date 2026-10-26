@@ -1,9 +1,16 @@
 # Structured CLI explanations
 
-`explain` retains its existing `document` string and unchanged text output.
-JSON data adds `structure`, described by `cli/schemas/explain.json`. Both
-representations come from the same prepared explanation and retained result;
-the CLI does not parse the text document to reconstruct proof records.
+`explain --format json` retains the SDK `document` string and typed `structure`,
+described by `cli/schemas/explain.json`. Default text renders the same prepared
+explanation as English or French sentences with Datalog facts and named source
+variables. `--raw` selects the original SDK document in text mode; in JSON mode
+the document is always available and `--raw` changes no data.
+
+All three representations come from the same prepared explanation and retained
+result; the CLI does not parse the text document to reconstruct proof records.
+The public standard-grammar contract maps IR variables 0–25 to source names A–Z;
+anonymous local variables render as `_`. A truncated absence explanation is
+explicitly incomplete and never presented as proof that no derivation exists.
 
 The common fields are `kind` (`why-true` or `why-false`), `found`, `truncated`,
 `status`, the requested ground `query`, `steps`, and `obstacles`. Values retain

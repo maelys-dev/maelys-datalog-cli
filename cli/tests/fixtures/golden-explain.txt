@@ -1,13 +1,9 @@
-MAELYS-DATALOG-v2
-document=why-false
-status=complete
-query="can_deliver"("Mallory") origin=none
-summary=none
-limit-hits=none candidate-rules=2 substitutions=0 diagnostics=2 filter-cost=0
-diagnostic=0 rule=1 depth=1 target="allow"("Mallory","billing:read")
-binding=17 value="billing:read"
-binding=20 value="Mallory"
-obstacle=positive-no-match body=0 origin=none pattern="right"("Mallory","billing:read")
-diagnostic=1 rule=2 depth=0 target="can_deliver"("Mallory")
-binding=20 value="Mallory"
-obstacle=positive-no-match body=0 origin=none pattern="allow"("Mallory","billing:read")
+The fact is not derived: can_deliver("Mallory").
+
+Rule 1 cannot derive allow("Mallory", "billing:read").
+  With R = "billing:read", U = "Mallory".
+  No matching fact for right("Mallory", "billing:read").
+
+Rule 2 cannot derive can_deliver("Mallory").
+  With U = "Mallory".
+  No matching fact for allow("Mallory", "billing:read").

@@ -4,6 +4,10 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Render `explain` text as readable English or French sentences with Datalog
+  facts, source variable names and clear obstacles. Preserve JSON documents and
+  typed records; add `--raw` for the original SDK document in text mode.
+
 ## 0.4.1 — 2026-10-26
 
 - Fix Homebrew formula dependency ordering and use the supported installed-SDK
