@@ -4,6 +4,8 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+## 0.4.0 — 2026-10-26
+
 - Translate diagnosed explanation messages and hints in French human output,
   while preserving canonical structured JSON and successful explanation text.
 
@@ -34,8 +36,8 @@ All notable changes to `maelys-datalog-cli` are documented here.
 - Expand the startup-validated help examples for manifests, selected queries,
   structured absence explanations and symbol/integer/boolean terms.
 
-- Adopt maelys-cli 0.12.4, agent-cli-spec 2.21.0, Datalog SDK 0.26.0
-  and maelys-release 0.65.1. Preserve the JSON 0.3.0 pin required by the
+- Adopt maelys-cli 0.12.4, agent-cli-spec 2.21.0, maelys-datalog SDK 0.26.0
+  and maelys-release 0.65.1. Preserve the maelys-json 0.3.0 pin required by the
   framework and accept abbreviated optional switches in human help tests.
 
 - Build the Homebrew CLI against the installed static `libmaelys-datalog` SDK,
