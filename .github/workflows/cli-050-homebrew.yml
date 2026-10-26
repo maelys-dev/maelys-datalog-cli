@@ -1,0 +1,46 @@
+name: Verify published CLI 0.5.0 on clean Homebrew
+on:
+  push:
+    branches: [test/cli-050-homebrew]
+permissions:
+  contents: read
+jobs:
+  install:
+    runs-on: macos-15
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Verify a clean public macOS environment and update Homebrew
+        run: |
+          set -euo pipefail
+          ! brew tap | grep -Fx 'maelys-dev/tap'
+          ! brew list --formula | grep -Ex '(lib)?maelys-datalog'
+          uname -a | tee "$RUNNER_TEMP/cli-050-host.txt"
+          brew update 2>&1 | tee "$RUNNER_TEMP/cli-050-brew-update.txt"
+          brew --version | tee "$RUNNER_TEMP/cli-050-brew-version.txt"
+          brew config | tee "$RUNNER_TEMP/cli-050-brew-config.txt"
+      - name: Run the documented tap, trust and install commands
+        run: |
+          set -euo pipefail
+          brew tap maelys-dev/tap 2>&1 | tee "$RUNNER_TEMP/cli-050-tap.txt"
+          brew trust maelys-dev/tap 2>&1 | tee "$RUNNER_TEMP/cli-050-trust.txt"
+          brew install maelys-dev/tap/maelys-datalog 2>&1 | tee "$RUNNER_TEMP/cli-050-install.txt"
+          maelys-datalog version | tee "$RUNNER_TEMP/cli-050-version.txt"
+          test "$(maelys-datalog version)" = 'maelys-datalog 0.5.0'
+          brew info --json=v2 maelys-datalog > "$RUNNER_TEMP/cli-050-installed.json"
+          brew list --formula | tee "$RUNNER_TEMP/cli-050-formulas.txt"
+          otool -L "$(command -v maelys-datalog)" | tee "$RUNNER_TEMP/cli-050-linkage.txt"
+      - name: Run the installed formula smoke test
+        run: |
+          set -euo pipefail
+          brew test maelys-dev/tap/maelys-datalog 2>&1 | tee "$RUNNER_TEMP/cli-050-test.txt"
+      - name: Preserve exact published installation output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: cli-050-clean-homebrew
+          path: ${{ runner.temp }}/cli-050-*
+          if-no-files-found: error
+          retention-days: 14
