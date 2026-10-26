@@ -894,22 +894,43 @@ static const maelys_cli_option_t explain_options[] = {
     {MAELYS_CLI_STRING("policy-id", "ID", "Inline policy identifier.")},
     {MAELYS_CLI_UNSIGNED("work-limit", "N", "Cooperative work limit (unsupported by the reference backend).", 1u, 0u)},
 };
+static const maelys_cli_example_t check_examples[] = {
+    {MAELYS_CLI_EXAMPLE("check --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
+                        "Validate the RBAC policy and its domain.")},
+};
+static const maelys_cli_example_t queries_examples[] = {
+    {MAELYS_CLI_EXAMPLE("queries --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
+                        "List the RBAC policy authorized queries.")},
+};
+static const maelys_cli_example_t fingerprint_examples[] = {
+    {MAELYS_CLI_EXAMPLE("fingerprint --domain cli/tests/fixtures/rbac.domain.json cli/tests/fixtures/rbac.dl",
+                        "Read the RBAC policy and execution identities.")},
+};
+static const maelys_cli_example_t solve_examples[] = {
+    {MAELYS_CLI_EXAMPLE("solve --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl cli/tests/fixtures/rbac.dl",
+                        "Solve the RBAC policy against the example facts.")},
+};
+static const maelys_cli_example_t explain_examples[] = {
+    {MAELYS_CLI_EXAMPLE("explain --domain cli/tests/fixtures/rbac.domain.json --facts cli/tests/fixtures/rbac.facts.dl --why true cli/tests/fixtures/rbac.dl can_deliver \"Leela\"",
+                        "Explain why Leela can receive a delivery.")},
+};
+
 static const maelys_cli_command_t commands[] = {
     {MAELYS_CLI_READ("check", "check", "Validate a domain and policy; exit 2 reports rejection.",
                      command_check), MAELYS_CLI_OPERANDS(policy_operand),
-     MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_check_schema)},
+     MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_check_schema), MAELYS_CLI_EXAMPLES(check_examples)},
     {MAELYS_CLI_READ("queries", "queries", "List each policy's effectively authorized queries.",
                      command_queries), MAELYS_CLI_OPERANDS(policy_operand),
-     MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_queries_schema)},
+     MAELYS_CLI_OPTIONS(policy_options), MAELYS_CLI_SCHEMA(datalog_queries_schema), MAELYS_CLI_EXAMPLES(queries_examples)},
     {MAELYS_CLI_READ("fingerprint", "fingerprint", "Read policy and execution identities.",
                      command_fingerprint), MAELYS_CLI_OPERANDS(policy_operand),
-     MAELYS_CLI_OPTIONS(fingerprint_options), MAELYS_CLI_SCHEMA(datalog_fingerprint_schema)},
+     MAELYS_CLI_OPTIONS(fingerprint_options), MAELYS_CLI_SCHEMA(datalog_fingerprint_schema), MAELYS_CLI_EXAMPLES(fingerprint_examples)},
     {MAELYS_CLI_READ("solve", "solve", "Solve an inline policy against one EDB batch.",
                      command_solve), MAELYS_CLI_OPERANDS(policy_operand),
-     MAELYS_CLI_OPTIONS(solve_options), MAELYS_CLI_SCHEMA(datalog_solve_schema)},
+     MAELYS_CLI_OPTIONS(solve_options), MAELYS_CLI_SCHEMA(datalog_solve_schema), MAELYS_CLI_EXAMPLES(solve_examples)},
     {MAELYS_CLI_READ("explain", "explain", "Explain a typed query against a solved policy.",
                      command_explain), MAELYS_CLI_OPERANDS(explain_operands),
-     MAELYS_CLI_OPTIONS(explain_options), MAELYS_CLI_SCHEMA(datalog_explain_schema)},
+     MAELYS_CLI_OPTIONS(explain_options), MAELYS_CLI_SCHEMA(datalog_explain_schema), MAELYS_CLI_EXAMPLES(explain_examples)},
 };
 
 int main(int argc, char **argv) {

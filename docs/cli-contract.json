@@ -21,7 +21,7 @@
               {
                 "name": "COMMAND_ID",
                 "required": false,
-                "summary": "Stable command identifier whose help is shown.",
+                "summary": "Stable command identifier whose help is shown, the family of commands under an identifier, or `conventions`.",
                 "variadic": false
               }
             ],
@@ -304,6 +304,17 @@
         {
           "available": true,
           "effect": "read",
+          "examples": [
+            {
+              "summary": "Validate the RBAC policy and its domain.",
+              "words": [
+                "check",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "cli/tests/fixtures/rbac.dl"
+              ]
+            }
+          ],
           "exitCodes": {
             "0": "command completed",
             "1": "execution failed",
@@ -691,6 +702,17 @@
         {
           "available": true,
           "effect": "read",
+          "examples": [
+            {
+              "summary": "List the RBAC policy authorized queries.",
+              "words": [
+                "queries",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "cli/tests/fixtures/rbac.dl"
+              ]
+            }
+          ],
           "exitCodes": {
             "0": "command completed",
             "1": "execution failed",
@@ -859,6 +881,17 @@
         {
           "available": true,
           "effect": "read",
+          "examples": [
+            {
+              "summary": "Read the RBAC policy and execution identities.",
+              "words": [
+                "fingerprint",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "cli/tests/fixtures/rbac.dl"
+              ]
+            }
+          ],
           "exitCodes": {
             "0": "command completed",
             "1": "execution failed",
@@ -948,6 +981,19 @@
         {
           "available": true,
           "effect": "read",
+          "examples": [
+            {
+              "summary": "Solve the RBAC policy against the example facts.",
+              "words": [
+                "solve",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "--facts",
+                "cli/tests/fixtures/rbac.facts.dl",
+                "cli/tests/fixtures/rbac.dl"
+              ]
+            }
+          ],
           "exitCodes": {
             "0": "command completed",
             "1": "execution failed",
@@ -1245,6 +1291,23 @@
         {
           "available": true,
           "effect": "read",
+          "examples": [
+            {
+              "summary": "Explain why Leela can receive a delivery.",
+              "words": [
+                "explain",
+                "--domain",
+                "cli/tests/fixtures/rbac.domain.json",
+                "--facts",
+                "cli/tests/fixtures/rbac.facts.dl",
+                "--why",
+                "true",
+                "cli/tests/fixtures/rbac.dl",
+                "can_deliver",
+                "\"Leela\""
+              ]
+            }
+          ],
           "exitCodes": {
             "0": "command completed",
             "1": "execution failed",
