@@ -2,6 +2,7 @@
 """Product behavior and data schemas; the spec kit covers the shared CLI."""
 import hashlib
 import json
+import os
 import pathlib
 import re
 import shlex
@@ -9,6 +10,8 @@ import subprocess
 import sys
 import tempfile
 
+
+os.environ["MAELYS_CLI_LANG"] = "en"  # Stable canonical golden text in every locale.
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "cli/tests/fixtures"
@@ -186,6 +189,40 @@ def diagnosed_explanations():
             if key in result:
                 result[key] = "<fingerprint>"
         assert result == json.loads((FIXTURE / f"golden-{name}.json").read_text())
+
+def french_text():
+    def invoke(words, env=None):
+        return subprocess.run([str(BINARY), *map(str, words)], text=True,
+                              capture_output=True, cwd=ROOT, env=env)
+    help_fr = invoke(["help", "explain", "--lang", "fr"])
+    assert help_fr.returncode == 0 and "Expliquer une requête typée" in help_fr.stdout
+    env = dict(os.environ, MAELYS_CLI_LANG="fr")
+    assert "UTILISATION" in invoke(["help", "solve"], env).stdout
+    assert "USAGE" in invoke(["help", "solve", "--lang", "en"], env).stdout
+    env.pop("MAELYS_CLI_LANG")
+    env["LC_ALL"] = "fr_FR.UTF-8"
+    assert "UTILISATION" in invoke(["help", "solve"], env).stdout
+    assert "UTILISATION" in invoke(["help", "solve", "--lang", "fr-CA"]).stdout
+    assert "USAGE" in invoke(["help", "solve", "--lang", "de"]).stdout
+    domain, policy, facts = (FIXTURE / ("rbac." + suffix) for suffix in
+                            ("domain.json", "dl", "facts.dl"))
+    base = ["solve", "--domain", domain, "--facts", "missing-facts.dl", policy]
+    translated = invoke([*base, "--lang", "fr"])
+    assert translated.returncode == 1 and "fichier de faits introuvable" in translated.stderr
+    assert invoke([*base, "--lang", "fr", "--format", "json"]).stderr == invoke(
+        [*base, "--lang", "en", "--format", "json"]).stderr
+    with tempfile.TemporaryDirectory() as directory:
+        bad = pathlib.Path(directory) / "facts.dl"
+        bad.write_text('request("Leela",).')
+        error = invoke(["solve", "--domain", domain, "--facts", bad, policy, "--lang", "fr"])
+        assert "fait 0 à 1:" in error.stderr and "symbole entre guillemets" in error.stderr
+    base = ["solve", "--domain", domain, "--facts", facts, policy, "--format", "json"]
+    assert invoke([*base, "--lang", "fr"]).stdout == invoke([*base, "--lang", "en"]).stdout
+    base = ["explain", "--domain", domain, "--facts", facts, "--why", "true", policy,
+            "can_deliver", '"Leela"', "--format", "json"]
+    assert invoke([*base, "--lang", "fr"]).stdout == invoke([*base, "--lang", "en"]).stdout
+    assert invoke(["describe", "--lang", "fr", "--format", "json"]).stdout == invoke(
+        ["describe", "--lang", "en", "--format", "json"]).stdout
 
 
 def temporary_file(directory, name, content):
@@ -628,4 +665,6 @@ if __name__ == "__main__":
     catalog_examples()
     diagnostic_details()
     diagnosed_explanations()
+
+    french_text()
     print("cli behavior and schemas: PASS")

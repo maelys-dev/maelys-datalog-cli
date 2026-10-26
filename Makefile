@@ -5,6 +5,7 @@ PROFILE ?= SMALL
 PREFIX ?= /usr/local
 MAN_DATE = $(shell python3 scripts/manual-date.py)
 MAN = $(BUILD_DIR)/man/maelys-datalog.1
+FR_MAN = $(BUILD_DIR)/man/fr/maelys-datalog.1
 SANITIZE_FLAGS ?=
 
 ifeq ($(filter $(PROFILE),SMALL LARGE),)
@@ -113,7 +114,7 @@ $(BUILD_DIR)/generated/datalog_schemas.h: $(SCHEMAS) | $(CLI_LIB)
 	@mkdir -p $(dir $@)
 	$(CLI_DIR)/tools/maelys-cli-embed --header $(SCHEMA_SYMBOLS) > $@
 
-$(BUILD_DIR)/obj/%.o: cli/%.c cli/reader.h cli/explanation.h $(BUILD_DIR)/generated/datalog_schemas.h | $(ENGINE_LIB) $(CLI_LIB) $(JSON_LIB)
+$(BUILD_DIR)/obj/%.o: cli/%.c cli/reader.h cli/explanation.h cli/languages.h $(BUILD_DIR)/generated/datalog_schemas.h | $(ENGINE_LIB) $(CLI_LIB) $(JSON_LIB)
 	@mkdir -p $(dir $@)
 	$(CC) $(CLI_CFLAGS) -c $< -o $@
 
@@ -183,7 +184,11 @@ $(MAN): $(BIN) CHANGELOG.md $(CLI_DIR)/tools/maelys-cli-man
 	@mkdir -p $(dir $@)
 	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" $(abspath $(BIN)) > $@
 
-man-check: $(MAN)
+$(FR_MAN): $(BIN) CHANGELOG.md $(CLI_DIR)/tools/maelys-cli-man
+	@mkdir -p $(dir $@)
+	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" --lang fr $(abspath $(BIN)) > $@
+
+man-check: $(MAN) $(FR_MAN)
 	python3 cli/tests/test_manual.py "$(CLI_DIR)/tools/maelys-cli-man" $(abspath $(BIN)) $(MAN) "$(MAN_DATE)"
 
 manual-mdx: $(BIN)
@@ -197,7 +202,9 @@ asan-cli:
 	$(MAKE) BUILD_DIR=build/asan-$(PROFILE) PROFILE=$(PROFILE) \
 		SANITIZE_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer -O1' cli-test
 
-install: check-engine-contract $(BIN) $(MAN)
+install: check-engine-contract $(BIN) $(MAN) $(FR_MAN)
+	install -d "$(DESTDIR)$(PREFIX)/share/man/fr/man1"
+	install -m 644 "$(FR_MAN)" "$(DESTDIR)$(PREFIX)/share/man/fr/man1/maelys-datalog.1"
 	install -d "$(DESTDIR)$(PREFIX)/share/man/man1"
 	install -m 644 "$(MAN)" "$(DESTDIR)$(PREFIX)/share/man/man1/maelys-datalog.1"
 	install -d "$(DESTDIR)$(PREFIX)/bin"
