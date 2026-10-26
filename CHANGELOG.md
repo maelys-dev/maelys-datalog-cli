@@ -4,6 +4,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## [Unreleased]
 
+- Fix Homebrew formula dependency ordering and use the supported installed-SDK
+  path helper so formula lint permits bottle generation.
+
 ## 0.4.0 — 2026-10-26
 
 - Translate diagnosed explanation messages and hints in French human output,

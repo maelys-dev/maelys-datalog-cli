@@ -10,8 +10,8 @@ class MaelysDatalog < Formula
   license "MPL-2.0"
 
   depends_on "git" => :build
-  depends_on "python@3.14" => :build
   depends_on "maelys-dev/tap/libmaelys-datalog" => :build
+  depends_on "python@3.14" => :build
 
   resource "maelys-cli" do
     url "https://github.com/maelys-dev/maelys-cli.git",
@@ -30,7 +30,7 @@ class MaelysDatalog < Formula
     resource("maelys-json").stage dependencies/"maelys-json"
     system "make", "install", "PREFIX=#{prefix}",
            "MAELYS_DEPENDENCIES_DIR=#{dependencies}",
-           "INSTALLED_SDK_PREFIX=#{Formula["libmaelys-datalog"].opt_prefix}"
+           "INSTALLED_SDK_PREFIX=#{formula_opt_prefix("libmaelys-datalog")}"
   end
 
   test do
