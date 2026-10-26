@@ -8,6 +8,9 @@ All notable changes to `maelys-datalog-cli` are documented here.
   and program ABI 2, verified by compiling its public headers. Reject older
   versions or incompatible contracts before linking.
 
+- Expand the startup-validated help examples for manifests, selected queries,
+  structured absence explanations and symbol/integer/boolean terms.
+
 - Adopt maelys-cli 0.12.4, agent-cli-spec 2.21.0, Datalog SDK 0.26.0
   and maelys-release 0.65.1. Preserve the JSON 0.3.0 pin required by the
   framework and accept abbreviated optional switches in human help tests.

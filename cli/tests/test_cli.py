@@ -20,7 +20,8 @@ from validate import validate  # noqa: E402
 
 def run(command, *arguments, exit_code=0):
     process = subprocess.run(
-        [str(BINARY), command, *map(str, arguments), "--format", "json", "--compact"],
+        [str(BINARY), command, *map(str, arguments),
+         *([] if "--format" in arguments else ["--format", "json"]), "--compact"],
         capture_output=True, text=True, cwd=ROOT, check=False,
     )
     assert process.returncode == exit_code, (command, process.stdout, process.stderr)
@@ -108,6 +109,21 @@ def help_catalog():
                 if words and words[0] == BINARY.name:
                     rendered.append(words[1:])
             assert example["words"] in rendered
+
+
+def catalog_examples():
+    catalog = json.loads(subprocess.check_output(
+        [str(BINARY), "describe", "--format", "json"], text=True))["data"]
+    for command in catalog["commands"]:
+        if command["id"] not in {"check", "queries", "inspect", "fingerprint", "solve", "explain"}:
+            continue
+        for example in command["examples"]:
+            words = example["words"]
+            result = run(words[0], *words[1:])
+            if words[0] == "explain":
+                assert result["structure"]["kind"] == "why-" + result["why"]
+            if "--manifest" in words:
+                assert len(result.get("policies", [])) == 2
 
 
 def temporary_file(directory, name, content):
@@ -549,4 +565,5 @@ if __name__ == "__main__":
     integers_and_manifest()
     manifest_query_whitelist()
     help_catalog()
+    catalog_examples()
     print("cli behavior and schemas: PASS")
