@@ -1,0 +1,49 @@
+name: probe direct libmaelys-datalog install without tap trust
+on:
+  push:
+    branches: [test/libdatalog-homebrew-no-trust]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Verify a clean public macOS runner and update Homebrew
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          if brew list --formula -1 | grep -Eq '^(maelys-datalog|libmaelys-datalog)$'; then
+            echo 'Maelys CLI or SDK is already installed' >&2
+            exit 1
+          fi
+          if brew tap | grep -qx maelys-dev/tap; then
+            echo 'Maelys tap is already present' >&2
+            exit 1
+          fi
+          brew update
+          brew --version | tee "$RUNNER_TEMP/lib-homebrew-probe-version.txt"
+          brew config > "$RUNNER_TEMP/lib-homebrew-probe-config.txt"
+          echo 'Fresh hosted macOS runner: no Maelys package or tap; Homebrew updated'
+      - name: Run the exact library installation command without trust
+        shell: bash
+        run: |
+          set -uo pipefail
+          printf '%s\n' 'brew install maelys-dev/tap/libmaelys-datalog'
+          set +e
+          brew install maelys-dev/tap/libmaelys-datalog 2>&1 | tee "$RUNNER_TEMP/lib-homebrew-probe-install.txt"
+          status=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$status" > "$RUNNER_TEMP/lib-homebrew-probe-exit.txt"
+          printf '\nInstallation command exit status: %s\n' "$status"
+          if [ "$status" -eq 0 ]; then
+            brew list --versions libmaelys-datalog | tee "$RUNNER_TEMP/lib-homebrew-probe-installed.txt"
+          fi
+      - name: Preserve exact installation output
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: direct-lib-homebrew-without-trust
+          path: ${{ runner.temp }}/lib-homebrew-probe-*.txt
+          if-no-files-found: error
+          retention-days: 14
