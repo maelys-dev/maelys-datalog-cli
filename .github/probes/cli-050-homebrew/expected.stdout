@@ -1,0 +1,5 @@
+allow(alice, roadmap.pdf) = true
+allow(bob, roadmap.pdf) = true
+allow(mallory, roadmap.pdf) = false
+has_any_document(alice) = true
+has_any_document(bob) = false

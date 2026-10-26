@@ -1,0 +1,9 @@
+{
+  "source": "https://datalog.maelys.dev/docs/quickstart/stable/",
+  "sdkVersion": "0.26.0",
+  "sdkCommit": "2a69e8daa937fc80cc2852b35288db18097b94f9",
+  "cliVersion": "0.5.0",
+  "cliCommit": "83b875ee46215eae73c995e6d4389fed1946a2b3",
+  "programSha256": "aabf8ccc1a48d604c3c7479288f415a816634d0a90b52c4235e252b93497bd13",
+  "expectedStdoutSha256": "1b5c195ceb6fe8b0e9e637b962e056f8d330922fa238cd30699dd55f5a698f39"
+}

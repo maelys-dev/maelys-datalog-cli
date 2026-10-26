@@ -12,6 +12,10 @@ jobs:
       run:
         shell: bash
     steps:
+      - name: Check out the fixed verification inputs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Verify a clean public macOS environment and update Homebrew
         run: |
           set -euo pipefail
@@ -26,12 +30,28 @@ jobs:
           set -euo pipefail
           brew tap maelys-dev/tap 2>&1 | tee "$RUNNER_TEMP/cli-050-tap.txt"
           brew trust maelys-dev/tap 2>&1 | tee "$RUNNER_TEMP/cli-050-trust.txt"
+          brew install maelys-dev/tap/libmaelys-datalog pkgconf 2>&1 | tee "$RUNNER_TEMP/cli-050-sdk-install.txt"
+          pkg-config --with-path="$(brew --prefix libmaelys-datalog)/lib/pkgconfig" --exact-version=0.26.0 maelys-datalog
+          brew list --versions libmaelys-datalog | tee "$RUNNER_TEMP/cli-050-sdk-version.txt"
           brew install maelys-dev/tap/maelys-datalog 2>&1 | tee "$RUNNER_TEMP/cli-050-install.txt"
           maelys-datalog version | tee "$RUNNER_TEMP/cli-050-version.txt"
           test "$(maelys-datalog version)" = 'maelys-datalog 0.5.0'
           brew info --json=v2 maelys-datalog > "$RUNNER_TEMP/cli-050-installed.json"
           brew list --formula | tee "$RUNNER_TEMP/cli-050-formulas.txt"
           otool -L "$(command -v maelys-datalog)" | tee "$RUNNER_TEMP/cli-050-linkage.txt"
+      - name: Compile the public SDK Quick Start and run it twice
+        run: |
+          set -euo pipefail
+          work=$(mktemp -d "$RUNNER_TEMP/cli-050-program-XXXXXX")
+          cp .github/probes/cli-050-homebrew/main.c "$work/main.c"
+          cc -std=c11 -Wall -Wextra "$work/main.c" \
+            $(pkg-config --with-path="$(brew --prefix libmaelys-datalog)/lib/pkgconfig" --cflags --libs maelys-datalog) \
+            -o "$work/quickstart"
+          "$work/quickstart" | tee "$RUNNER_TEMP/cli-050-sdk-run-1.txt"
+          "$work/quickstart" | tee "$RUNNER_TEMP/cli-050-sdk-run-2.txt"
+          cmp "$RUNNER_TEMP/cli-050-sdk-run-1.txt" "$RUNNER_TEMP/cli-050-sdk-run-2.txt"
+          cmp .github/probes/cli-050-homebrew/expected.stdout "$RUNNER_TEMP/cli-050-sdk-run-1.txt"
+          shasum -a 256 .github/probes/cli-050-homebrew/main.c .github/probes/cli-050-homebrew/expected.stdout | tee "$RUNNER_TEMP/cli-050-sdk-input-hashes.txt"
       - name: Run the installed formula smoke test
         run: |
           set -euo pipefail
