@@ -81,3 +81,7 @@ A newer stable Homebrew SDK is accepted within that frozen contract; source
 builds still use the exact tag and commit declared by the pin.
 
 Failures preserve their general agent-cli code and carry [structured causes](docs/specifications/maelys-datalog-diagnostics-v1.md) for agents and editors.
+
+`man maelys-datalog` is installed with the CLI, generated from the catalog.
+`make manual-mdx` renders the same manual into `build/man/maelys-datalog.mdx`
+for a documentation site; neither rendering is maintained by hand.

@@ -34,6 +34,7 @@ class MaelysDatalog < Formula
   end
 
   test do
+    assert_path_exists man1/"maelys-datalog.1"
     assert_equal "maelys-datalog @VERSION@",
                  shell_output("#{bin}/maelys-datalog version").strip
     (testpath/"domain.json").write <<~JSON

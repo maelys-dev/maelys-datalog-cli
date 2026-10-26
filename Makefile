@@ -3,6 +3,8 @@ CMAKE ?= cmake
 BUILD_DIR ?= build
 PROFILE ?= SMALL
 PREFIX ?= /usr/local
+MAN_DATE = $(shell python3 scripts/manual-date.py)
+MAN = $(BUILD_DIR)/man/maelys-datalog.1
 SANITIZE_FLAGS ?=
 
 ifeq ($(filter $(PROFILE),SMALL LARGE),)
@@ -176,14 +178,28 @@ installed-sdk-check: $(BIN) $(BUILD_DIR)/bin/sdk-policy-lifetime $(BUILD_DIR)/bi
 sdk-compatibility-check:
 	CC="$(CC)" python3 cli/tests/test_installed_sdk.py
 
+.PHONY: man-check manual-mdx
+$(MAN): $(BIN) CHANGELOG.md $(CLI_DIR)/tools/maelys-cli-man
+	@mkdir -p $(dir $@)
+	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" $(abspath $(BIN)) > $@
+
+man-check: $(MAN)
+	python3 cli/tests/test_manual.py "$(CLI_DIR)/tools/maelys-cli-man" $(abspath $(BIN)) $(MAN) "$(MAN_DATE)"
+
+manual-mdx: $(BIN)
+	@mkdir -p $(BUILD_DIR)/man
+	python3 "$(CLI_DIR)/tools/maelys-cli-man" --date "$(MAN_DATE)" --format mdx --body-only $(abspath $(BIN)) > $(BUILD_DIR)/man/maelys-datalog.mdx
+
 check: check-engine-contract check-cli-contract check-json-contract \
-    check-spec-contract cli-test conformance-check installed-sdk-check sdk-compatibility-check
+    check-spec-contract cli-test conformance-check installed-sdk-check sdk-compatibility-check man-check
 
 asan-cli:
 	$(MAKE) BUILD_DIR=build/asan-$(PROFILE) PROFILE=$(PROFILE) \
 		SANITIZE_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer -O1' cli-test
 
-install: check-engine-contract $(BIN)
+install: check-engine-contract $(BIN) $(MAN)
+	install -d "$(DESTDIR)$(PREFIX)/share/man/man1"
+	install -m 644 "$(MAN)" "$(DESTDIR)$(PREFIX)/share/man/man1/maelys-datalog.1"
 	install -d "$(DESTDIR)$(PREFIX)/bin"
 	install -m 755 "$(BIN)" "$(DESTDIR)$(PREFIX)/bin/maelys-datalog"
 	install -d "$(DESTDIR)$(PREFIX)/share/doc/maelys-datalog"
