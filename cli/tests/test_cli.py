@@ -101,17 +101,20 @@ def help_catalog():
         assert command["id"] in help_data["commands"]
         assert command["usage"].startswith(" ".join(command["pattern"]))
         assert help_data["text"].strip() == page.strip()
+        if command["id"] in {"solve", "fingerprint", "explain"}:
+            assert command["input"]["operands"][0]["required"]
         assert command["examples"]
         for example in command["examples"]:
             rendered = []
-            for line in page.splitlines():
+            french_page = text("help", command["id"], "--lang", "fr")
+            for line in (page + "\n" + french_page).splitlines():
                 try:
                     words = shlex.split(line)
                 except ValueError:
                     continue
                 if words and words[0] == BINARY.name:
                     rendered.append(words[1:])
-            assert example["words"] in rendered
+            assert rendered.count(example["words"]) == 2
 
 
 def catalog_examples():
@@ -130,6 +133,9 @@ def catalog_examples():
 
 
 def diagnostic_details():
+    for command, options in [("fingerprint", ()), ("solve", ("--facts", "missing.dl"))]:
+        error = run(command, "--domain", "missing.json", *options, exit_code=1)
+        assert error["code"] == "VALIDATION_FAILED"
     domain, policy, facts = (FIXTURE / ("rbac." + suffix) for suffix in
                             ("domain.json", "dl", "facts.dl"))
     missing = run("solve", "--domain", domain, "--facts", "missing-facts.dl", policy, exit_code=1)
@@ -207,7 +213,7 @@ def french_text():
         return subprocess.run([str(BINARY), *map(str, words)], text=True,
                               capture_output=True, cwd=ROOT, env=env)
     help_fr = invoke(["help", "explain", "--lang", "fr"])
-    assert help_fr.returncode == 0 and "Expliquer une requête typée" in help_fr.stdout
+    assert help_fr.returncode == 0 and "expliquer pourquoi un fait" in help_fr.stdout
     env = dict(os.environ, MAELYS_CLI_LANG="fr")
     assert "UTILISATION" in invoke(["help", "solve"], env).stdout
     assert "USAGE" in invoke(["help", "solve", "--lang", "en"], env).stdout
@@ -223,6 +229,16 @@ def french_text():
     assert translated.returncode == 1 and "fichier de faits introuvable" in translated.stderr
     assert invoke([*base, "--lang", "fr", "--format", "json"]).stderr == invoke(
         [*base, "--lang", "en", "--format", "json"]).stderr
+    # A valid empty result must not leave an English marker in French text.
+    with tempfile.TemporaryDirectory() as directory:
+        empty = pathlib.Path(directory) / "empty.dl"
+        empty.write_text("")
+        empty_words = ["solve", "--domain", domain, "--facts", empty, policy]
+        result = invoke([*empty_words, "--lang", "fr"])
+        assert result.returncode == 0 and "(aucun fait)" in result.stdout
+        assert "(none)" not in result.stdout
+        assert invoke([*empty_words, "--lang", "fr", "--format", "json"]).stdout == invoke(
+            [*empty_words, "--lang", "en", "--format", "json"]).stdout
     with tempfile.TemporaryDirectory() as directory:
         bad = pathlib.Path(directory) / "facts.dl"
         bad.write_text('request("Leela",).')

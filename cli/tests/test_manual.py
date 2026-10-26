@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import sys
 
-tool, binary, manual, date = sys.argv[1:]
+tool, binary, manual, french_manual, date = sys.argv[1:]
 root = pathlib.Path(__file__).resolve().parents[2]
 version = (root / "VERSION").read_text().strip()
 expected = subprocess.check_output([sys.executable, tool, "--date", date,
@@ -18,6 +18,6 @@ print("manual and archived catalog: PASS")
 fr_native = subprocess.check_output([sys.executable, tool, "--date", date, "--lang", "fr", binary])
 fr_catalog = subprocess.check_output([sys.executable, tool, "--date", date, "--lang", "fr",
     "--catalog", str(root / "docs/cli-contract.json"), "--version", version, "maelys-datalog"])
-assert fr_native == fr_catalog
+assert pathlib.Path(french_manual).read_bytes() == fr_native == fr_catalog, "French manual differs from committed catalog"
 assert not subprocess.check_output([sys.executable, tool, "--lang", "fr", "--untranslated", binary]).strip()
 print("French manual and complete catalog translation: PASS")

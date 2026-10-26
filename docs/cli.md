@@ -13,12 +13,12 @@ Common contract: `agent-cli/v2`. For the machine-readable detail run
 | describe | `describe [COMMAND_ID] [--summary] [--prefix PREFIX]` | read | json-envelope | Show the machine-readable catalog, its summary or one descriptor. |
 | completion | `completion SHELL` | read | json-envelope | Print the shell completion script generated from the catalog. |
 | complete.candidates | `__complete [WORDS...]` | read | json-records | Return completion candidates for a partial command line. |
-| check | `check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | Validate a domain and policy; exit 2 reports rejection. |
-| inspect | `inspect [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | Inspect compiled policy counts, limits and authorized queries. |
-| queries | `queries [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | List each policy's effectively authorized queries. |
-| fingerprint | `fingerprint [POLICY] --domain FILE [--policy-id ID] [--work-limit N]` | read | json-envelope | Read policy and execution identities. |
-| solve | `solve [POLICY] --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]` | read | json-envelope | Solve an inline policy against one EDB batch. |
-| explain | `explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true\|false [--policy-id ID] [--work-limit N]` | read | json-envelope | Explain a typed query against a solved policy. |
+| check | `check [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | Validate a policy or manifest; exit 2 means semantic rejection. |
+| inspect | `inspect [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | Show compiled policy statistics, limits and authorized queries without solving. |
+| queries | `queries [POLICY] --domain FILE... [--manifest FILE] [--policy-id ID] [--allow-test-only] [--allow-undeclared-policy-atoms]` | read | json-envelope | List the predicates each policy allows you to query. |
+| fingerprint | `fingerprint POLICY --domain FILE [--policy-id ID] [--work-limit N]` | read | json-envelope | Show the policy fingerprint and its configured execution fingerprint. |
+| solve | `solve POLICY --domain FILE --facts FILE [--policy-id ID] [--query PRED[/ARITY]...] [--work-limit N]` | read | json-envelope | Evaluate a policy with input facts and print query results. |
+| explain | `explain POLICY PREDICATE [TERMS...] --domain FILE --facts FILE --why true\|false [--policy-id ID] [--work-limit N]` | read | json-envelope | Evaluate a policy and explain why a fact is present or absent. |
 
 Global options:
 
