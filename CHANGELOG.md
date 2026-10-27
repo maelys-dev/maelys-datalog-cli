@@ -2,13 +2,20 @@
 
 All notable changes to `maelys-datalog-cli` are documented here.
 
+## Unreleased
+
+- Stop guessing source variable names in human explanations. Render rule-local
+  `?N` identifiers, including anonymous variables; preserve raw documents and
+  structured JSON. Cover long, reversed, mixed and anonymous variables in
+  English and French.
+
 ## 0.5.0 — 2026-10-26
 
 - Agree the solve fact count in English and French, including singular and
   plural output; keep structured results unchanged.
 
 - Render `explain` text as readable English or French sentences with Datalog
-  facts, source variable names and clear obstacles. Preserve JSON documents and
+  facts, variable bindings and clear obstacles. Preserve JSON documents and
   typed records; add `--raw` for the original SDK document in text mode.
 
 ## 0.4.1 — 2026-10-26

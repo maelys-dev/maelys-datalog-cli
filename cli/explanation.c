@@ -235,9 +235,8 @@ static void human_fact(explanation_text_t *out, const maelys_datalog_fact_t *f) 
     append(out, ").");
 }
 static void variable(explanation_text_t *out, unsigned id) {
-    /* The public standard-grammar contract maps A-Z to 0-25; 26+ are
-     * anonymous locals, not additional source variable names. */
-    char text[] = {id < 26u ? (char)('A' + id) : '_', 0}; append(out, text);
+    /* A numeric ID does not identify a source spelling, even below 26. */
+    append(out, "?"); number(out, id);
 }
 static void human_atom(explanation_text_t *out, const maelys_datalog_ir_atom_t *a) {
     append(out, a->predicate); append(out, "(");
@@ -295,9 +294,9 @@ static maelys_datalog_status_t human_obstacle(explanation_text_t *out,
     const maelys_datalog_explanation_obstacle_view_t *o) {
     sentence(out, "\nRule "); number(out, o->rule_id); sentence(out, " cannot derive ");
     human_fact(out, &o->target); append(out, "\n");
-    if (o->bound_variable_mask & ((UINT32_C(1) << 26) - 1u)) {
+    if (o->bound_variable_mask) {
         sentence(out, "  With "); int first = 1;
-        for (unsigned n = 0; n < 26u; ++n) {
+        for (unsigned n = 0; n < MAELYS_DATALOG_IR_MAX_VARIABLES; ++n) {
             if (!(o->bound_variable_mask & (UINT32_C(1) << n))) continue;
             if (!first) append(out, ", ");
             first = 0;

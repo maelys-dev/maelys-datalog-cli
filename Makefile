@@ -130,6 +130,7 @@ $(BIN): $(OBJECTS) $(BUILD_DIR)/obj/datalog_schemas.o $(ENGINE_LIB) $(CLI_LIB) $
 
 cli-test: $(BIN) check-spec-contract
 	python3 cli/tests/test_cli.py $(abspath $(BIN)) "$(SPEC_DIR)"
+	python3 cli/tests/test_explanation_variable_names.py $(abspath $(BIN))
 
 conformance-check: $(BIN) check-spec-contract
 	python3 "$(SPEC_DIR)/conformance/run.py" $(abspath $(BIN))
