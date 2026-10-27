@@ -17,7 +17,6 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "cli/tests/fixtures"
 BINARY = pathlib.Path(sys.argv[1])
 SPEC = pathlib.Path(sys.argv[2])
-HAS_RULE_VARIABLE_NAMES = len(sys.argv) > 3 and sys.argv[3] == "1"
 sys.path.insert(0, str(SPEC / "conformance"))
 from validate import validate  # noqa: E402
 
@@ -189,10 +188,9 @@ def diagnosed_explanations():
              ("explain-unseen", "false", "can_deliver", '\"UnseenSymbol\"', 1)]
     for name, why, predicate, term, status in cases:
         args = ("--domain", domain, "--facts", facts, "--why", why, policy, predicate, term)
-        golden_name = name + ("-names" if name == "explain" and HAS_RULE_VARIABLE_NAMES else "")
         human = text("explain", *args, exit_code=status)
         assert "[NOT_FOUND] not_found" not in human
-        assert re.sub(r"[0-9a-f]{64}", "<fingerprint>", human) == (FIXTURE / f"golden-{golden_name}.txt").read_text()
+        assert re.sub(r"[0-9a-f]{64}", "<fingerprint>", human) == (FIXTURE / f"golden-{name}.txt").read_text()
         result = run("explain", *args, exit_code=status)
         if name == "explain-unseen":
             diagnostic = result["x-datalog"]["diagnostic"]
@@ -208,7 +206,7 @@ def diagnosed_explanations():
         assert result == json.loads((FIXTURE / f"golden-{name}.json").read_text())
 
         french = text("explain", *args, "--lang", "fr", exit_code=status)
-        assert french == (FIXTURE / f"golden-{golden_name}-fr.txt").read_text()
+        assert french == (FIXTURE / f"golden-{name}-fr.txt").read_text()
         assert "[NOT_FOUND] not_found" not in french
         localized = run("explain", *args, "--lang", "fr", exit_code=status)
         for key in ("policyFingerprint", "executionFingerprint"):

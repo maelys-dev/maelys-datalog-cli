@@ -179,8 +179,6 @@ typedef struct {
     size_t length, capacity;
     int failed;
     const maelys_cli_context_t *context;
-    const maelys_datalog_program_t *program;
-    size_t rule_id;
 } explanation_text_t;
 
 static const char *translated(explanation_text_t *out, const char *source) {
@@ -237,18 +235,6 @@ static void human_fact(explanation_text_t *out, const maelys_datalog_fact_t *f) 
     append(out, ").");
 }
 static void variable(explanation_text_t *out, unsigned id) {
-#ifdef MAELYS_DATALOG_HAS_RULE_VARIABLE_NAMES
-    const char *source_name = NULL;
-    /* Explanation rule IDs are one-based; public program accessors are
-     * zero-based. The name is borrowed while this program remains alive. */
-    if (out->program && out->rule_id &&
-        maelys_datalog_program_rule_variable_name(out->program, out->rule_id - 1u,
-            id, &source_name) == MAELYS_DATALOG_STATUS_OK &&
-        source_name && source_name[0]) {
-        append(out, source_name);
-        return;
-    }
-#endif
     /* A numeric ID does not identify a source spelling, even below 26. */
     append(out, "?"); number(out, id);
 }
@@ -306,7 +292,6 @@ static maelys_datalog_status_t human_premise(explanation_text_t *out,
 }
 static maelys_datalog_status_t human_obstacle(explanation_text_t *out,
     const maelys_datalog_explanation_obstacle_view_t *o) {
-    out->rule_id = o->rule_id;
     sentence(out, "\nRule "); number(out, o->rule_id); sentence(out, " cannot derive ");
     human_fact(out, &o->target); append(out, "\n");
     if (o->bound_variable_mask) {
@@ -353,10 +338,9 @@ static maelys_datalog_status_t human_obstacle(explanation_text_t *out,
     append(out, "\n"); return MAELYS_DATALOG_STATUS_OK;
 }
 maelys_datalog_status_t datalog_cli_explanation_text(const maelys_cli_context_t *context,
-    const maelys_datalog_program_t *program,
     const maelys_datalog_prepared_explanation_t *prepared,
     const maelys_datalog_fact_t *query, char **text) {
-    explanation_text_t out = {.context = context, .program = program};
+    explanation_text_t out = {.context = context};
     maelys_datalog_explanation_info_t info = {0};
     maelys_datalog_status_t rc = maelys_datalog_prepared_explanation_info(prepared, &info);
     if (rc != MAELYS_DATALOG_STATUS_OK) return rc;
@@ -368,7 +352,6 @@ maelys_datalog_status_t datalog_cli_explanation_text(const maelys_cli_context_t 
             maelys_datalog_explanation_step_view_t s = {0};
             rc = maelys_datalog_prepared_explanation_step(prepared, i, &s);
             if (rc != MAELYS_DATALOG_STATUS_OK) goto fail;
-            out.rule_id = s.rule_id;
             sentence(&out, "\nRule "); number(&out, s.rule_id); sentence(&out, " derives "); human_fact(&out, &s.fact); append(&out, "\n");
             for (size_t n = 0; n < s.premise_count; ++n) {
                 maelys_datalog_explanation_premise_view_t p = {0};

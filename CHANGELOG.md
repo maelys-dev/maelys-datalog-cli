@@ -4,11 +4,10 @@ All notable changes to `maelys-datalog-cli` are documented here.
 
 ## Unreleased
 
-- Stop guessing source variable names in human explanations. SDK 0.26.0 renders
-  rule-local `?N` identifiers, including anonymous variables. Use source names
-  only when the SDK advertises the additive rule-variable-name API and its lookup
-  succeeds; preserve raw documents and structured JSON. Cover long, reversed,
-  mixed and anonymous variables in English and French.
+- Stop guessing source variable names in human explanations. Render rule-local
+  `?N` identifiers, including anonymous variables; preserve raw documents and
+  structured JSON. Cover long, reversed, mixed and anonymous variables in
+  English and French.
 
 ## 0.5.0 — 2026-10-26
 

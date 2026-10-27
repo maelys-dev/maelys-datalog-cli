@@ -8,15 +8,10 @@ the document is always available and `--raw` changes no data.
 
 All three representations come from the same prepared explanation and retained
 result; the CLI does not parse the text document to reconstruct proof records.
-Variable IDs are rule-local identifiers, not a mapping to letters A–Z. Without
-source-name information, text uses `?N`, matching the raw SDK document, including
-anonymous variables. The SDK 0.26.0 has no public source-name accessor, so even
-single-letter variables use their numeric IDs. When the installed SDK defines
-`MAELYS_DATALOG_HAS_RULE_VARIABLE_NAMES`, the CLI asks
-`maelys_datalog_program_rule_variable_name` for the source spelling. It uses that
-name only on success, otherwise retaining `?N`. Public rule indices are
-zero-based; explanation rule IDs are index + 1. Names are borrowed only while the
-program remains alive. JSON variable IDs and the raw SDK document do not change.
+Variable IDs are rule-local identifiers, not a mapping to letters A–Z. Text
+uses `?N`, matching the raw SDK document, including anonymous variables and
+single-letter source variables. These IDs do not recover the source spelling.
+JSON variable IDs and the raw SDK document do not change.
 
 A truncated absence explanation is explicitly incomplete and never presented as
 proof that no derivation exists.

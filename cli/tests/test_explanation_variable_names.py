@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Golden source-name/opaque-ID cases, run against a real CLI executable."""
+"""Golden rule-local variable IDs, run against a real CLI executable."""
 import argparse
 import difflib
 import json
@@ -27,8 +27,6 @@ CASES = {
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('binary', type=Path)
-    parser.add_argument('--source-names', action='store_true',
-                        help='expect the SDK source-name API path')
     args = parser.parse_args()
     failed = 0
     with tempfile.TemporaryDirectory(prefix='datalog-variable-names-') as tmp:
@@ -50,22 +48,20 @@ def main():
                        '--facts', str(facts), '--why', 'false', str(policy),
                        'can_deliver', '"Mallory"']
             for lang in ('en', 'fr'):
-                environment = dict(os.environ, MAELYS_CLI_LANG=lang,
-                                   DATALOG_CLI_TEST_NAMES_CASE=case)
+                environment = dict(os.environ, MAELYS_CLI_LANG=lang)
                 result = subprocess.run(command + ['--format', 'text'], env=environment, capture_output=True, text=True)
-                suffix = 'names' if args.source_names else 'ids'
-                golden = FIXTURES / f'{case}-{lang}-{suffix}.txt'
+                golden = FIXTURES / f'{case}-{lang}-ids.txt'
                 expected = golden.read_text()
                 if result.returncode or result.stderr or result.stdout != expected:
                     failed += 1
-                    print(f'FAIL {case}/{lang} ({suffix}): exit={result.returncode}')
+                    print(f'FAIL {case}/{lang} (ids): exit={result.returncode}')
                     print(''.join(difflib.unified_diff(expected.splitlines(True),
                         result.stdout.splitlines(True), fromfile=str(golden.name),
                         tofile='actual')), end='')
                     if result.stderr:
                         print(result.stderr, end='')
                 else:
-                    print(f'PASS {case}/{lang} ({suffix})')
+                    print(f'PASS {case}/{lang} (ids)')
                 # Machine records retain the SDK variable IDs and raw document.
                 structured = subprocess.run(command + ['--format', 'json', '--compact'],
                     env=environment, capture_output=True, text=True, check=True)
