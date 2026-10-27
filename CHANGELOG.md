@@ -2,7 +2,7 @@
 
 All notable changes to `maelys-datalog-cli` are documented here.
 
-## Unreleased
+## 0.5.1 — 2026-10-27
 
 - Stop guessing source variable names in human explanations. Render rule-local
   `?N` identifiers, including anonymous variables; preserve raw documents and
