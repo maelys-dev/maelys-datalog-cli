@@ -1,9 +1,10 @@
 The fact is not derived: can_deliver("Mallory").
 
 Rule 1 cannot derive allow("Mallory", "billing:read").
-  With ?0 = "billing:read", ?20 = "Mallory".
+  With ?26 = "Mallory".
+  Already satisfied: request("Mallory", "billing:read"). (input fact)
   No matching fact for right("Mallory", "billing:read").
 
 Rule 2 cannot derive can_deliver("Mallory").
-  With ?20 = "Mallory".
+  With User = "Mallory".
   No matching fact for allow("Mallory", "billing:read").

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Golden rule-local variable IDs, run against a real CLI executable."""
+"""Golden source variable names, run against a real CLI executable.
+
+Named variables render with their source spelling from the SDK; anonymous
+variables keep the SDK's ?N identifier."""
 import argparse
 import difflib
 import json
@@ -50,18 +53,18 @@ def main():
             for lang in ('en', 'fr'):
                 environment = dict(os.environ, MAELYS_CLI_LANG=lang)
                 result = subprocess.run(command + ['--format', 'text'], env=environment, capture_output=True, text=True)
-                golden = FIXTURES / f'{case}-{lang}-ids.txt'
+                golden = FIXTURES / f'{case}-{lang}-names.txt'
                 expected = golden.read_text()
                 if result.returncode or result.stderr or result.stdout != expected:
                     failed += 1
-                    print(f'FAIL {case}/{lang} (ids): exit={result.returncode}')
+                    print(f'FAIL {case}/{lang} (names): exit={result.returncode}')
                     print(''.join(difflib.unified_diff(expected.splitlines(True),
                         result.stdout.splitlines(True), fromfile=str(golden.name),
                         tofile='actual')), end='')
                     if result.stderr:
                         print(result.stderr, end='')
                 else:
-                    print(f'PASS {case}/{lang} (ids)')
+                    print(f'PASS {case}/{lang} (names)')
                 # Machine records retain the SDK variable IDs and raw document.
                 structured = subprocess.run(command + ['--format', 'json', '--compact'],
                     env=environment, capture_output=True, text=True, check=True)

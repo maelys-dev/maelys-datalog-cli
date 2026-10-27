@@ -3,11 +3,13 @@
 #define DATALOG_CLI_EXPLANATION_H
 #include <maelys/cli.h>
 #include <maelys/datalog_explanations.h>
+#include <maelys/datalog_program.h>
 maelys_datalog_status_t datalog_cli_explanation_json(
     maelys_cli_json_writer_t *, const maelys_datalog_prepared_explanation_t *,
     const maelys_datalog_fact_t *query);
-/* Allocated CLI output; free after rendering, before releasing the lease. */
+/* Allocated CLI output; free after rendering, before releasing the lease.
+ * program, when not NULL, supplies the source spelling of rule variables. */
 maelys_datalog_status_t datalog_cli_explanation_text(
     const maelys_cli_context_t *, const maelys_datalog_prepared_explanation_t *,
-    const maelys_datalog_fact_t *query, char **text);
+    const maelys_datalog_program_t *program, const maelys_datalog_fact_t *query, char **text);
 #endif

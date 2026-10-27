@@ -9,8 +9,10 @@ the document is always available and `--raw` changes no data.
 All three representations come from the same prepared explanation and retained
 result; the CLI does not parse the text document to reconstruct proof records.
 Variable IDs are rule-local identifiers, not a mapping to letters A–Z. Text
-uses `?N`, matching the raw SDK document, including anonymous variables and
-single-letter source variables. These IDs do not recover the source spelling.
+shows a variable's source spelling when the SDK returns it through
+`maelys_datalog_program_rule_variable_name` (SDK 0.27.0), and otherwise `?N`,
+matching the raw SDK document: anonymous variables, and names the SDK did not
+retain. A numeric ID is never decoded into a name.
 JSON variable IDs and the raw SDK document do not change.
 
 A truncated absence explanation is explicitly incomplete and never presented as
