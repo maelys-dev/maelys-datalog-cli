@@ -2,6 +2,14 @@
 
 All notable changes to `maelys-datalog-cli` are documented here.
 
+## Unreleased
+
+- Show source variable names in human explanations (`User`, `Resource`, `U`),
+  read from the SDK through `maelys_datalog_program_rule_variable_name`; keep
+  `?N` for anonymous variables and names the SDK does not return. Require
+  Datalog SDK 0.27.0 (pinned to v0.27.0, `24b1655`). Raw documents and
+  structured JSON are unchanged.
+
 ## 0.5.1 — 2026-10-27
 
 - Stop guessing source variable names in human explanations. Render rule-local

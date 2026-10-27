@@ -98,8 +98,9 @@ language, including inside a JSON envelope). Known explanation diagnostic
 messages and hints are translated for human text; the SDK diagnostic in JSON
 and engine explanation documents in JSON are preserved verbatim. Default
 `explain` text presents facts, variable bindings and obstacles in readable English
-or French. Variables use their rule-local `?N` identifiers, including anonymous
-variables; those IDs do not recover the original source spelling.
+or French. Named variables appear with their source spelling (`User`, `R`), read
+from the SDK (0.27.0 or later); a variable the SDK does not name, such as an
+anonymous `_`, keeps its rule-local `?N` identifier.
 `explain --raw` prints the original SDK document for inspection.
 Both English and French manuals are installed.
 
